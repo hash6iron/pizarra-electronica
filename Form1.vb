@@ -804,6 +804,32 @@
         CambiarTema(TemaColor.Retro)
     End Sub
 
+    Private Sub MenuGraficar_Click(sender As Object, e As EventArgs) Handles MenuGraficar.Click
+        ' Solicitar al usuario la función a graficar
+        Dim resultado As String = InputBox("Introduce la función a graficar en términos de x:" & vbCrLf & vbCrLf &
+                                          "Ejemplos:" & vbCrLf &
+                                          "  • x^2" & vbCrLf &
+                                          "  • sin(x)" & vbCrLf &
+                                          "  • 2*x+3" & vbCrLf &
+                                          "  • x^2+2*x-3" & vbCrLf &
+                                          "  • cos(x)*sin(x)" & vbCrLf &
+                                          "  • exp(x)" & vbCrLf &
+                                          "  • log(x)" & vbCrLf &
+                                          "  • abs(x)" & vbCrLf &
+                                          "  • sqrt(x)",
+                                          "Graficar Función", "x^2")
+
+        If Not String.IsNullOrWhiteSpace(resultado) Then
+            Try
+                ' Crear y mostrar el formulario de gráfico
+                Dim formGraf As New FormGrafico(resultado, usarRadianes)
+                formGraf.ShowDialog()
+            Catch ex As Exception
+                MessageBox.Show("Error al graficar la función: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            End Try
+        End If
+    End Sub
+
     Private Sub CambiarTema(tema As TemaColor)
         temaActual = tema
 

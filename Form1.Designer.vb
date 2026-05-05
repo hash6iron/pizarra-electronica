@@ -31,6 +31,8 @@ Partial Class Form1
         Me.SeparadorArchivo = New System.Windows.Forms.ToolStripSeparator()
         Me.MenuSalir = New System.Windows.Forms.ToolStripMenuItem()
         Me.MenuEditar = New System.Windows.Forms.ToolStripMenuItem()
+        Me.MenuVer = New System.Windows.Forms.ToolStripMenuItem()
+        Me.MenuGraficar = New System.Windows.Forms.ToolStripMenuItem()
         Me.MenuOpciones = New System.Windows.Forms.ToolStripMenuItem()
         Me.MenuRadianes = New System.Windows.Forms.ToolStripMenuItem()
         Me.SeparadorOpciones = New System.Windows.Forms.ToolStripSeparator()
@@ -62,7 +64,7 @@ Partial Class Form1
         '
         'MenuPrincipal
         '
-        Me.MenuPrincipal.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.MenuArchivo, Me.MenuEditar, Me.MenuOpciones, Me.MenuEstadisticas})
+        Me.MenuPrincipal.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.MenuArchivo, Me.MenuEditar, Me.MenuVer, Me.MenuOpciones, Me.MenuEstadisticas})
         Me.MenuPrincipal.Location = New System.Drawing.Point(0, 0)
         Me.MenuPrincipal.Name = "MenuPrincipal"
         Me.MenuPrincipal.Size = New System.Drawing.Size(1200, 24)
@@ -114,6 +116,20 @@ Partial Class Form1
         Me.MenuEditar.Name = "MenuEditar"
         Me.MenuEditar.Size = New System.Drawing.Size(49, 20)
         Me.MenuEditar.Text = "&Editar"
+        '
+        'MenuVer
+        '
+        Me.MenuVer.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.MenuGraficar})
+        Me.MenuVer.Name = "MenuVer"
+        Me.MenuVer.Size = New System.Drawing.Size(35, 20)
+        Me.MenuVer.Text = "&Ver"
+        '
+        'MenuGraficar
+        '
+        Me.MenuGraficar.Name = "MenuGraficar"
+        Me.MenuGraficar.ShortcutKeys = System.Windows.Forms.Keys.F5
+        Me.MenuGraficar.Size = New System.Drawing.Size(200, 22)
+        Me.MenuGraficar.Text = "&Graficar Función..."
         '
         'MenuOpciones
         '
@@ -249,6 +265,8 @@ Partial Class Form1
     Friend WithEvents SeparadorArchivo As ToolStripSeparator
     Friend WithEvents MenuSalir As ToolStripMenuItem
     Friend WithEvents MenuEditar As ToolStripMenuItem
+    Friend WithEvents MenuVer As ToolStripMenuItem
+    Friend WithEvents MenuGraficar As ToolStripMenuItem
     Friend WithEvents MenuOpciones As ToolStripMenuItem
     Friend WithEvents MenuRadianes As ToolStripMenuItem
     Friend WithEvents SeparadorOpciones As ToolStripSeparator

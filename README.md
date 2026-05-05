@@ -89,6 +89,42 @@ Cada tema ajusta:
 - Color del cursor
 - Color de selección
 
+### 📈 Representación Gráfica de Ecuaciones
+
+**Nueva funcionalidad**: Visualiza funciones matemáticas en un plano cartesiano interactivo.
+
+#### Características del Graficador:
+- **Menú Ver > Graficar Función (F5)**: Abre el diálogo de graficación
+- **Funciones soportadas**:
+  - Polinómicas: `x^2`, `x^3-2*x+1`
+  - Trigonométricas: `sin(x)`, `cos(x)`, `tan(x)`
+  - Exponenciales: `exp(x)`, `2^x`
+  - Logarítmicas: `log(x)`, `ln(x)`
+  - Raíces: `sqrt(x)`
+  - Valor absoluto: `abs(x)`
+  - Combinaciones: `sin(x)*cos(x)`, `x^2+sin(x)`
+
+#### Controles Interactivos:
+- 🖱️ **Rueda del ratón**: Zoom in/out
+- 🖱️ **Arrastrar con botón izquierdo**: Mover el plano
+- ➕ **Botón +**: Acercar zoom
+- ➖ **Botón -**: Alejar zoom
+- 🔄 **Botón Reset**: Volver a la vista inicial (-10 a 10 en ambos ejes)
+
+#### Visualización:
+- Ejes cartesianos con etiquetas numéricas
+- Cuadrícula automática adaptativa al nivel de zoom
+- Curva suave con antialiasing
+- Manejo de discontinuidades (ej: `1/x` en x=0)
+- Indicador de rango visible y nivel de zoom
+- Respeta el modo radianes/grados para funciones trigonométricas
+
+**Ejemplo de uso**:
+1. Presiona **F5** o ve a **Ver > Graficar Función**
+2. Escribe la función, por ejemplo: `sin(x)*cos(x)`
+3. Explora el gráfico usando zoom y arrastre
+4. Observa cómo cambia la curva
+
 ### 💾 Gestión de Archivos
 
 - **Guardar (CTRL+S)**: Guarda la pizarra actual
@@ -161,6 +197,7 @@ git clone https://github.com/TU_USUARIO/pizarra-electronica.git
 | **TAB/SHIFT+TAB** | Avanzar/Retroceder tab stop |
 | **ESC** | Limpiar línea actual |
 | **SHIFT+Cursores** | Seleccionar texto |
+| **F5** | Graficar función |
 
 ## 🛠️ Tecnologías Utilizadas
 
@@ -235,10 +272,12 @@ Si encuentras algún bug, por favor abre un [issue](https://github.com/TU_USUARI
 - [x] ✅ Historial de ejercicios completados
 - [x] ✅ Estadísticas de progreso
 - [x] ✅ Temas de color personalizables (4 temas disponibles)
-- [ ] Representación gráfica de ecuaciones (dibujar curvas)
+- [x] ✅ Representación gráfica de ecuaciones (dibujar curvas) con zoom y arrastre
+- [ ] Exportar gráficos a imagen
 - [ ] Exportar a PDF
 - [ ] Modo de examen con temporizador
 - [ ] Generador automático de ejercicios
+- [ ] Múltiples funciones en un mismo gráfico
 
 ---
 
