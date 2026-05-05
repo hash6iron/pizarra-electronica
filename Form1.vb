@@ -280,16 +280,14 @@
                 Else
                     haySeleccion = False
                 End If
-                If cursorX > 0 Then
-                    If MenuEditar.Checked Then
+                If MenuEditar.Checked Then
+                    ' En modo EDICIÓN, movimiento libre
+                    If cursorX > 0 Then cursorX -= 1
+                Else
+                    ' En modo NO EDICIÓN, moverse dentro del campo o buscar otro campo
+                    If cursorX > 0 AndAlso esCampoResultado(cursorY, cursorX - 1) Then
+                        ' La posición a la izquierda es parte del mismo campo
                         cursorX -= 1
-                    Else
-                        ' En modo NO EDICIÓN, solo moverse dentro de campos de resultado
-                        Dim nuevoX As Integer = cursorX - 1
-                        While nuevoX >= 0 AndAlso Not esCampoResultado(cursorY, nuevoX)
-                            nuevoX -= 1
-                        End While
-                        If nuevoX >= 0 Then cursorX = nuevoX
                     End If
                 End If
                 If shiftPresionado Then ActualizarFinSeleccion()
@@ -301,16 +299,14 @@
                 Else
                     haySeleccion = False
                 End If
-                If cursorX < COLUMNAS - 1 Then
-                    If MenuEditar.Checked Then
+                If MenuEditar.Checked Then
+                    ' En modo EDICIÓN, movimiento libre
+                    If cursorX < COLUMNAS - 1 Then cursorX += 1
+                Else
+                    ' En modo NO EDICIÓN, moverse dentro del campo o buscar otro campo
+                    If cursorX < COLUMNAS - 1 AndAlso esCampoResultado(cursorY, cursorX + 1) Then
+                        ' La posición a la derecha es parte del mismo campo
                         cursorX += 1
-                    Else
-                        ' En modo NO EDICIÓN, solo moverse dentro de campos de resultado
-                        Dim nuevoX As Integer = cursorX + 1
-                        While nuevoX < COLUMNAS AndAlso Not esCampoResultado(cursorY, nuevoX)
-                            nuevoX += 1
-                        End While
-                        If nuevoX < COLUMNAS Then cursorX = nuevoX
                     End If
                 End If
                 If shiftPresionado Then ActualizarFinSeleccion()
@@ -418,10 +414,14 @@
 
             Case Keys.F2
                 ' Alternar modo EDICIÓN / COMPROBACIÓN
-                MenuEditar.Checked = Not MenuEditar.Checked
-                ' Si pasamos a modo NO EDICIÓN, detectar campos de resultado
-                If Not MenuEditar.Checked Then
+                If MenuEditar.Checked Then
+                    ' Pasando de EDICIÓN a NO EDICIÓN: detectar campos
+                    MenuEditar.Checked = False
                     DetectarCamposResultado()
+                Else
+                    ' Pasando de NO EDICIÓN a EDICIÓN: restaurar las R
+                    MenuEditar.Checked = True
+                    RestaurarCamposResultado()
                 End If
                 e.Handled = True
         End Select
@@ -591,7 +591,8 @@
     Private Function ContieneOperadorMatematico(texto As String) As Boolean
         Return texto.Contains("+"c) OrElse texto.Contains("-"c) OrElse
                texto.Contains("*"c) OrElse texto.Contains("/"c) OrElse
-               texto.Contains("^"c) OrElse texto.Contains("x"c) OrElse texto.Contains("X"c)
+               texto.Contains("^"c) OrElse texto.Contains("x"c) OrElse texto.Contains("X"c) OrElse
+               texto.Contains("("c) OrElse texto.Contains(")"c)
     End Function
 
     Private Function ObtenerLineaActual() As String
@@ -1637,13 +1638,6 @@
 
     ' Función para detectar y marcar campos de resultado (RRRR)
     Private Sub DetectarCamposResultado()
-        ' Limpiar todos los campos de resultado existentes
-        For y = 0 To FILAS - 1
-            For x = 0 To COLUMNAS - 1
-                esCampoResultado(y, x) = False
-            Next
-        Next
-
         ' Buscar patrones RRRR en toda la pizarra
         For y = 0 To FILAS - 1
             Dim lineaTexto As String = ""
@@ -1688,6 +1682,24 @@
                     Next
                 End If
             End If
+        Next
+        PanelPizarra.Invalidate()
+    End Sub
+
+    ' Función para restaurar las R cuando se vuelve a modo EDICIÓN
+    Private Sub RestaurarCamposResultado()
+        For y = 0 To FILAS - 1
+            For x = 0 To COLUMNAS - 1
+                If esCampoResultado(y, x) Then
+                    pizarra(y, x) = "R"c
+                End If
+            Next
+        Next
+        ' Limpiar los marcadores
+        For y = 0 To FILAS - 1
+            For x = 0 To COLUMNAS - 1
+                esCampoResultado(y, x) = False
+            Next
         Next
         PanelPizarra.Invalidate()
     End Sub
