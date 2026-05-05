@@ -21,6 +21,86 @@
     Private ultimaTeclaFin As Boolean = False
     Private archivoActual As String = ""
     Private pizarraModificada As Boolean = False
+    Private usarRadianes As Boolean = False
+
+    Private historialEjercicios As New List(Of EjercicioHistorial)
+    Private ejerciciosCorrectos As Integer = 0
+    Private ejerciciosIncorrectos As Integer = 0
+    Private ejerciciosTotales As Integer = 0
+
+    Private temaActual As TemaColor = TemaColor.Clasico
+
+    Public Enum TemaColor
+        Clasico
+        OscuroAzul
+        Matriz
+        Retro
+    End Enum
+
+    Public Class ConfiguracionTema
+        Public Property ColorFondo As Color
+        Public Property ColorTexto As Color
+        Public Property ColorCorrecto As Color
+        Public Property ColorIncorrecto As Color
+        Public Property ColorCursor As Color
+        Public Property ColorSeleccion As Color
+    End Class
+
+    Private Function ObtenerTema(tema As TemaColor) As ConfiguracionTema
+        Dim config As New ConfiguracionTema()
+
+        Select Case tema
+            Case TemaColor.Clasico
+                config.ColorFondo = Color.Black
+                config.ColorTexto = Color.White
+                config.ColorCorrecto = Color.Lime
+                config.ColorIncorrecto = Color.Red
+                config.ColorCursor = Color.Yellow
+                config.ColorSeleccion = Color.DarkBlue
+
+            Case TemaColor.OscuroAzul
+                config.ColorFondo = Color.FromArgb(15, 15, 35)
+                config.ColorTexto = Color.FromArgb(200, 220, 255)
+                config.ColorCorrecto = Color.FromArgb(100, 255, 150)
+                config.ColorIncorrecto = Color.FromArgb(255, 100, 100)
+                config.ColorCursor = Color.Cyan
+                config.ColorSeleccion = Color.FromArgb(40, 60, 100)
+
+            Case TemaColor.Matriz
+                config.ColorFondo = Color.Black
+                config.ColorTexto = Color.FromArgb(0, 255, 0)
+                config.ColorCorrecto = Color.FromArgb(150, 255, 150)
+                config.ColorIncorrecto = Color.FromArgb(255, 100, 0)
+                config.ColorCursor = Color.FromArgb(0, 255, 0)
+                config.ColorSeleccion = Color.FromArgb(0, 50, 0)
+
+            Case TemaColor.Retro
+                config.ColorFondo = Color.FromArgb(40, 40, 120)
+                config.ColorTexto = Color.FromArgb(255, 255, 180)
+                config.ColorCorrecto = Color.FromArgb(150, 255, 200)
+                config.ColorIncorrecto = Color.FromArgb(255, 150, 150)
+                config.ColorCursor = Color.White
+                config.ColorSeleccion = Color.FromArgb(80, 80, 160)
+        End Select
+
+        Return config
+    End Function
+
+    Public Class EjercicioHistorial
+        Public Property Ejercicio As String
+        Public Property RespuestaUsuario As String
+        Public Property RespuestaCorrecta As String
+        Public Property EsCorrecto As Boolean
+        Public Property Fecha As DateTime
+
+        Public Sub New(ej As String, respUsr As String, respCorr As String, correcto As Boolean)
+            Ejercicio = ej
+            RespuestaUsuario = respUsr
+            RespuestaCorrecta = respCorr
+            EsCorrecto = correcto
+            Fecha = DateTime.Now
+        End Sub
+    End Class
 
     Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         InicializarPizarra()
@@ -36,12 +116,14 @@
     End Sub
 
     Private Sub InicializarPizarra()
+        Dim config = ObtenerTema(temaActual)
         For y = 0 To FILAS - 1
             For x = 0 To COLUMNAS - 1
                 pizarra(y, x) = " "c
-                colores(y, x) = Color.White
+                colores(y, x) = config.ColorTexto
             Next
         Next
+        PanelPizarra.BackColor = config.ColorFondo
         PanelPizarra.Invalidate()
     End Sub
 
@@ -59,7 +141,8 @@
         Dim g As Graphics = e.Graphics
         Dim fuente As New Font("Courier New", 12, FontStyle.Bold)
         Dim fuenteSuperindice As New Font("Courier New", 8, FontStyle.Bold)
-        Dim brochaCursor As New SolidBrush(Color.Yellow)
+        Dim config = ObtenerTema(temaActual)
+        Dim brochaCursor As New SolidBrush(config.ColorCursor)
 
         For y = 0 To FILAS - 1
             Dim x As Integer = 0
@@ -87,14 +170,18 @@
                 If Not saltarCaracter Then
                     If x = cursorX AndAlso y = cursorY AndAlso parpadeo Then
                         g.FillRectangle(brochaCursor, posX, posY, TAMANO_CHAR, TAMANO_CHAR)
+                        Dim brochaNegra As New SolidBrush(config.ColorFondo)
                         If esSuperindice Then
-                            g.DrawString(pizarra(y, x).ToString(), fuenteSuperindice, Brushes.Black, posX, posY - 4)
+                            g.DrawString(pizarra(y, x).ToString(), fuenteSuperindice, brochaNegra, posX, posY - 4)
                         Else
-                            g.DrawString(pizarra(y, x).ToString(), fuente, Brushes.Black, posX, posY)
+                            g.DrawString(pizarra(y, x).ToString(), fuente, brochaNegra, posX, posY)
                         End If
+                        brochaNegra.Dispose()
                     ElseIf estaSeleccionado Then
-                        g.FillRectangle(Brushes.Yellow, posX, posY, TAMANO_CHAR, TAMANO_CHAR)
-                        Dim brochaSeleccion As New SolidBrush(Color.DarkGoldenrod)
+                        Dim brochaFondoSeleccion As New SolidBrush(config.ColorSeleccion)
+                        g.FillRectangle(brochaFondoSeleccion, posX, posY, TAMANO_CHAR, TAMANO_CHAR)
+                        brochaFondoSeleccion.Dispose()
+                        Dim brochaSeleccion As New SolidBrush(config.ColorTexto)
                         If esSuperindice Then
                             g.DrawString(pizarra(y, x).ToString(), fuenteSuperindice, brochaSeleccion, posX, posY - 4)
                         Else
@@ -345,16 +432,25 @@
             Dim resultadoUsuarioNum As Double
 
             If Double.TryParse(resultadoUsuario, resultadoUsuarioNum) Then
-                If Math.Abs(resultadoCorrecto - resultadoUsuarioNum) < 0.001 Then
-                    ColorearOperacion(cursorY, operacion, Color.Lime)
+                Dim correcto As Boolean = Math.Abs(resultadoCorrecto - resultadoUsuarioNum) < 0.001
+                Dim config = ObtenerTema(temaActual)
+
+                If correcto Then
+                    ColorearOperacion(cursorY, operacion, config.ColorCorrecto)
+                    ejerciciosCorrectos += 1
                 Else
-                    ColorearOperacion(cursorY, operacion, Color.Red)
+                    ColorearOperacion(cursorY, operacion, config.ColorIncorrecto)
                     AgregarResultadoCorrecto(resultadoCorrecto, operacion)
+                    ejerciciosIncorrectos += 1
                 End If
+
+                ejerciciosTotales += 1
+                historialEjercicios.Add(New EjercicioHistorial(expresion, resultadoUsuario, resultadoCorrecto.ToString(), correcto))
             End If
 
         Catch ex As Exception
-            ColorearOperacion(cursorY, operacion, Color.Red)
+            Dim config = ObtenerTema(temaActual)
+            ColorearOperacion(cursorY, operacion, config.ColorIncorrecto)
         End Try
     End Sub
 
@@ -364,6 +460,7 @@
             ' Ej: 2x+2=12 -> x=5
             Dim ecuacion As String = partes(0).Trim()
             Dim ladoDerecho As String = partes(1).Trim()
+            Dim config = ObtenerTema(temaActual)
 
             ' Verificar si el usuario puso x=resultado
             If ladoDerecho.StartsWith("x=", StringComparison.OrdinalIgnoreCase) Then
@@ -375,14 +472,21 @@
                     Dim solucion As Double = ResolverEcuacion(ecuacion)
 
                     If Not Double.IsNaN(solucion) Then
-                        If Math.Abs(solucion - resultadoUsuario) < 0.001 Then
-                            ColorearOperacion(cursorY, operacion, Color.Lime)
+                        Dim correcto As Boolean = Math.Abs(solucion - resultadoUsuario) < 0.001
+
+                        If correcto Then
+                            ColorearOperacion(cursorY, operacion, config.ColorCorrecto)
+                            ejerciciosCorrectos += 1
                         Else
-                            ColorearOperacion(cursorY, operacion, Color.Red)
+                            ColorearOperacion(cursorY, operacion, config.ColorIncorrecto)
                             AgregarResultadoEcuacion(solucion, operacion)
+                            ejerciciosIncorrectos += 1
                         End If
+
+                        ejerciciosTotales += 1
+                        historialEjercicios.Add(New EjercicioHistorial(ecuacion, "x=" & resultadoUsuario.ToString(), "x=" & solucion.ToString(), correcto))
                     Else
-                        ColorearOperacion(cursorY, operacion, Color.Red)
+                        ColorearOperacion(cursorY, operacion, config.ColorIncorrecto)
                     End If
                 End If
             Else
@@ -398,7 +502,8 @@
             End If
 
         Catch ex As Exception
-            ColorearOperacion(cursorY, operacion, Color.Red)
+            Dim config = ObtenerTema(temaActual)
+            ColorearOperacion(cursorY, operacion, config.ColorIncorrecto)
         End Try
     End Sub
 
@@ -469,6 +574,7 @@
         Dim textoResultado As String = $" [{resultadoCorrecto}]"
         Dim lineaTexto As String = ObtenerLineaActual()
         Dim posOperacion As Integer = lineaTexto.IndexOf(operacion)
+        Dim config = ObtenerTema(temaActual)
 
         If posOperacion >= 0 Then
             Dim posInicio As Integer = posOperacion + operacion.Length
@@ -476,7 +582,7 @@
             For i = 0 To textoResultado.Length - 1
                 If posInicio + i < COLUMNAS Then
                     pizarra(cursorY, posInicio + i) = textoResultado(i)
-                    colores(cursorY, posInicio + i) = Color.Red
+                    colores(cursorY, posInicio + i) = config.ColorIncorrecto
                 End If
             Next
         End If
@@ -608,12 +714,117 @@
             estadoTexto &= "SOBREESCRIBIR"
         End If
 
+        If usarRadianes Then
+            If estadoTexto <> "" Then
+                estadoTexto &= " | "
+            End If
+            estadoTexto &= "RAD"
+        End If
+
         LabelModo.Text = estadoTexto
         LabelModo.ForeColor = Color.Blue
     End Sub
 
     Private Sub MenuEditar_CheckedChanged(sender As Object, e As EventArgs) Handles MenuEditar.CheckedChanged
         ActualizarBarraEstado()
+    End Sub
+
+    Private Sub MenuRadianes_CheckedChanged(sender As Object, e As EventArgs) Handles MenuRadianes.CheckedChanged
+        usarRadianes = MenuRadianes.Checked
+        ActualizarBarraEstado()
+    End Sub
+
+    Private Sub MenuVerEstadisticas_Click(sender As Object, e As EventArgs) Handles MenuVerEstadisticas.Click
+        Dim porcentaje As Double = 0
+        If ejerciciosTotales > 0 Then
+            porcentaje = (ejerciciosCorrectos / ejerciciosTotales) * 100
+        End If
+
+        MessageBox.Show($"Estadísticas de la sesión:{vbCrLf}{vbCrLf}" &
+                       $"Ejercicios totales: {ejerciciosTotales}{vbCrLf}" &
+                       $"Correctos: {ejerciciosCorrectos}{vbCrLf}" &
+                       $"Incorrectos: {ejerciciosIncorrectos}{vbCrLf}" &
+                       $"Porcentaje de aciertos: {porcentaje:F1}%",
+                       "Estadísticas", MessageBoxButtons.OK, MessageBoxIcon.Information)
+    End Sub
+
+    Private Sub MenuVerHistorial_Click(sender As Object, e As EventArgs) Handles MenuVerHistorial.Click
+        If historialEjercicios.Count = 0 Then
+            MessageBox.Show("No hay ejercicios en el historial aún.", "Historial", MessageBoxButtons.OK, MessageBoxIcon.Information)
+            Return
+        End If
+
+        Dim sb As New System.Text.StringBuilder()
+        sb.AppendLine("HISTORIAL DE EJERCICIOS")
+        sb.AppendLine("========================")
+        sb.AppendLine()
+
+        For i = historialEjercicios.Count - 1 To Math.Max(0, historialEjercicios.Count - 20) Step -1
+            Dim ej = historialEjercicios(i)
+            Dim estado As String = If(ej.EsCorrecto, "✓", "✗")
+            sb.AppendLine($"{estado} {ej.Ejercicio} = {ej.RespuestaUsuario} [{ej.RespuestaCorrecta}] - {ej.Fecha:HH:mm:ss}")
+        Next
+
+        If historialEjercicios.Count > 20 Then
+            sb.AppendLine()
+            sb.AppendLine($"(Mostrando los últimos 20 de {historialEjercicios.Count} ejercicios)")
+        End If
+
+        MessageBox.Show(sb.ToString(), "Historial", MessageBoxButtons.OK, MessageBoxIcon.Information)
+    End Sub
+
+    Private Sub MenuReiniciarEstadisticas_Click(sender As Object, e As EventArgs) Handles MenuReiniciarEstadisticas.Click
+        Dim resultado = MessageBox.Show("¿Desea reiniciar todas las estadísticas y borrar el historial?", 
+                                       "Confirmar reinicio", 
+                                       MessageBoxButtons.YesNo, 
+                                       MessageBoxIcon.Question)
+
+        If resultado = DialogResult.Yes Then
+            historialEjercicios.Clear()
+            ejerciciosCorrectos = 0
+            ejerciciosIncorrectos = 0
+            ejerciciosTotales = 0
+            MessageBox.Show("Estadísticas reiniciadas correctamente.", "Reinicio completado", MessageBoxButtons.OK, MessageBoxIcon.Information)
+        End If
+    End Sub
+
+    Private Sub MenuTemaClasico_Click(sender As Object, e As EventArgs) Handles MenuTemaClasico.Click
+        CambiarTema(TemaColor.Clasico)
+    End Sub
+
+    Private Sub MenuTemaOscuroAzul_Click(sender As Object, e As EventArgs) Handles MenuTemaOscuroAzul.Click
+        CambiarTema(TemaColor.OscuroAzul)
+    End Sub
+
+    Private Sub MenuTemaMatriz_Click(sender As Object, e As EventArgs) Handles MenuTemaMatriz.Click
+        CambiarTema(TemaColor.Matriz)
+    End Sub
+
+    Private Sub MenuTemaRetro_Click(sender As Object, e As EventArgs) Handles MenuTemaRetro.Click
+        CambiarTema(TemaColor.Retro)
+    End Sub
+
+    Private Sub CambiarTema(tema As TemaColor)
+        temaActual = tema
+
+        MenuTemaClasico.Checked = (tema = TemaColor.Clasico)
+        MenuTemaOscuroAzul.Checked = (tema = TemaColor.OscuroAzul)
+        MenuTemaMatriz.Checked = (tema = TemaColor.Matriz)
+        MenuTemaRetro.Checked = (tema = TemaColor.Retro)
+
+        Dim config = ObtenerTema(tema)
+        PanelPizarra.BackColor = config.ColorFondo
+
+        For y = 0 To FILAS - 1
+            For x = 0 To COLUMNAS - 1
+                If colores(y, x) = Color.White OrElse colores(y, x) = Color.FromArgb(200, 220, 255) OrElse 
+                   colores(y, x) = Color.FromArgb(0, 255, 0) OrElse colores(y, x) = Color.FromArgb(255, 255, 180) Then
+                    colores(y, x) = config.ColorTexto
+                End If
+            Next
+        Next
+
+        PanelPizarra.Invalidate()
     End Sub
 
     Private Sub IniciarOActualizarSeleccion()
@@ -1154,12 +1365,53 @@
     Private Function ProcesarFuncionesTrigonometricas(expresion As String) As String
         Dim resultado As String = expresion
 
+        ' Procesar log(x) - logaritmo natural (ln)
+        While resultado.Contains("log(")
+            Dim pos As Integer = resultado.IndexOf("log(")
+            Dim argumento As String = ExtraerArgumentoFuncion(resultado, pos + 4)
+            Dim valorArg As Double = EvaluarExpresionAvanzada(argumento)
+            Dim valorLog As Double = Math.Log10(valorArg)
+            resultado = resultado.Replace("log(" & argumento & ")", valorLog.ToString(System.Globalization.CultureInfo.InvariantCulture))
+        End While
+
+        ' Procesar ln(x) - logaritmo natural
+        While resultado.Contains("ln(")
+            Dim pos As Integer = resultado.IndexOf("ln(")
+            Dim argumento As String = ExtraerArgumentoFuncion(resultado, pos + 3)
+            Dim valorArg As Double = EvaluarExpresionAvanzada(argumento)
+            Dim valorLn As Double = Math.Log(valorArg)
+            resultado = resultado.Replace("ln(" & argumento & ")", valorLn.ToString(System.Globalization.CultureInfo.InvariantCulture))
+        End While
+
+        ' Procesar exp(x) - exponencial e^x
+        While resultado.Contains("exp(")
+            Dim pos As Integer = resultado.IndexOf("exp(")
+            Dim argumento As String = ExtraerArgumentoFuncion(resultado, pos + 4)
+            Dim valorArg As Double = EvaluarExpresionAvanzada(argumento)
+            Dim valorExp As Double = Math.Exp(valorArg)
+            resultado = resultado.Replace("exp(" & argumento & ")", valorExp.ToString(System.Globalization.CultureInfo.InvariantCulture))
+        End While
+
+        ' Procesar abs(x) - valor absoluto
+        While resultado.Contains("abs(")
+            Dim pos As Integer = resultado.IndexOf("abs(")
+            Dim argumento As String = ExtraerArgumentoFuncion(resultado, pos + 4)
+            Dim valorArg As Double = EvaluarExpresionAvanzada(argumento)
+            Dim valorAbs As Double = Math.Abs(valorArg)
+            resultado = resultado.Replace("abs(" & argumento & ")", valorAbs.ToString(System.Globalization.CultureInfo.InvariantCulture))
+        End While
+
         ' Procesar sin(x)
         While resultado.Contains("sin(")
             Dim pos As Integer = resultado.IndexOf("sin(")
             Dim argumento As String = ExtraerArgumentoFuncion(resultado, pos + 4)
             Dim valorArg As Double = EvaluarExpresionAvanzada(argumento)
-            Dim valorSin As Double = Math.Sin(valorArg * Math.PI / 180) ' Asumimos grados
+            Dim valorSin As Double
+            If usarRadianes Then
+                valorSin = Math.Sin(valorArg)
+            Else
+                valorSin = Math.Sin(valorArg * Math.PI / 180)
+            End If
             resultado = resultado.Replace("sin(" & argumento & ")", valorSin.ToString(System.Globalization.CultureInfo.InvariantCulture))
         End While
 
@@ -1168,7 +1420,12 @@
             Dim pos As Integer = resultado.IndexOf("cos(")
             Dim argumento As String = ExtraerArgumentoFuncion(resultado, pos + 4)
             Dim valorArg As Double = EvaluarExpresionAvanzada(argumento)
-            Dim valorCos As Double = Math.Cos(valorArg * Math.PI / 180)
+            Dim valorCos As Double
+            If usarRadianes Then
+                valorCos = Math.Cos(valorArg)
+            Else
+                valorCos = Math.Cos(valorArg * Math.PI / 180)
+            End If
             resultado = resultado.Replace("cos(" & argumento & ")", valorCos.ToString(System.Globalization.CultureInfo.InvariantCulture))
         End While
 
@@ -1177,7 +1434,12 @@
             Dim pos As Integer = resultado.IndexOf("tan(")
             Dim argumento As String = ExtraerArgumentoFuncion(resultado, pos + 4)
             Dim valorArg As Double = EvaluarExpresionAvanzada(argumento)
-            Dim valorTan As Double = Math.Tan(valorArg * Math.PI / 180)
+            Dim valorTan As Double
+            If usarRadianes Then
+                valorTan = Math.Tan(valorArg)
+            Else
+                valorTan = Math.Tan(valorArg * Math.PI / 180)
+            End If
             resultado = resultado.Replace("tan(" & argumento & ")", valorTan.ToString(System.Globalization.CultureInfo.InvariantCulture))
         End While
 
@@ -1261,6 +1523,7 @@
         Dim textoResultado As String = $" [x={solucion}]"
         Dim lineaTexto As String = ObtenerLineaActual()
         Dim posOperacion As Integer = lineaTexto.IndexOf(operacion)
+        Dim config = ObtenerTema(temaActual)
 
         If posOperacion >= 0 Then
             Dim posInicio As Integer = posOperacion + operacion.Length
@@ -1268,7 +1531,7 @@
             For i = 0 To textoResultado.Length - 1
                 If posInicio + i < COLUMNAS Then
                     pizarra(cursorY, posInicio + i) = textoResultado(i)
-                    colores(cursorY, posInicio + i) = Color.Red
+                    colores(cursorY, posInicio + i) = config.ColorIncorrecto
                 End If
             Next
         End If

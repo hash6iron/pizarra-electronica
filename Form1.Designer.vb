@@ -31,6 +31,19 @@ Partial Class Form1
         Me.SeparadorArchivo = New System.Windows.Forms.ToolStripSeparator()
         Me.MenuSalir = New System.Windows.Forms.ToolStripMenuItem()
         Me.MenuEditar = New System.Windows.Forms.ToolStripMenuItem()
+        Me.MenuOpciones = New System.Windows.Forms.ToolStripMenuItem()
+        Me.MenuRadianes = New System.Windows.Forms.ToolStripMenuItem()
+        Me.SeparadorOpciones = New System.Windows.Forms.ToolStripSeparator()
+        Me.MenuTemas = New System.Windows.Forms.ToolStripMenuItem()
+        Me.MenuTemaClasico = New System.Windows.Forms.ToolStripMenuItem()
+        Me.MenuTemaOscuroAzul = New System.Windows.Forms.ToolStripMenuItem()
+        Me.MenuTemaMatriz = New System.Windows.Forms.ToolStripMenuItem()
+        Me.MenuTemaRetro = New System.Windows.Forms.ToolStripMenuItem()
+        Me.MenuEstadisticas = New System.Windows.Forms.ToolStripMenuItem()
+        Me.MenuVerEstadisticas = New System.Windows.Forms.ToolStripMenuItem()
+        Me.MenuVerHistorial = New System.Windows.Forms.ToolStripMenuItem()
+        Me.SeparadorEstadisticas = New System.Windows.Forms.ToolStripSeparator()
+        Me.MenuReiniciarEstadisticas = New System.Windows.Forms.ToolStripMenuItem()
         Me.BarraEstado = New System.Windows.Forms.StatusStrip()
         Me.LabelModo = New System.Windows.Forms.ToolStripStatusLabel()
         Me.LabelPosicion = New System.Windows.Forms.ToolStripStatusLabel()
@@ -49,7 +62,7 @@ Partial Class Form1
         '
         'MenuPrincipal
         '
-        Me.MenuPrincipal.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.MenuArchivo, Me.MenuEditar})
+        Me.MenuPrincipal.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.MenuArchivo, Me.MenuEditar, Me.MenuOpciones, Me.MenuEstadisticas})
         Me.MenuPrincipal.Location = New System.Drawing.Point(0, 0)
         Me.MenuPrincipal.Name = "MenuPrincipal"
         Me.MenuPrincipal.Size = New System.Drawing.Size(1200, 24)
@@ -101,6 +114,88 @@ Partial Class Form1
         Me.MenuEditar.Name = "MenuEditar"
         Me.MenuEditar.Size = New System.Drawing.Size(49, 20)
         Me.MenuEditar.Text = "&Editar"
+        '
+        'MenuOpciones
+        '
+        Me.MenuOpciones.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.MenuRadianes, Me.SeparadorOpciones, Me.MenuTemas})
+        Me.MenuOpciones.Name = "MenuOpciones"
+        Me.MenuOpciones.Size = New System.Drawing.Size(69, 20)
+        Me.MenuOpciones.Text = "&Opciones"
+        '
+        'MenuRadianes
+        '
+        Me.MenuRadianes.CheckOnClick = True
+        Me.MenuRadianes.Name = "MenuRadianes"
+        Me.MenuRadianes.Size = New System.Drawing.Size(200, 22)
+        Me.MenuRadianes.Text = "Usar &Radianes"
+        '
+        'SeparadorOpciones
+        '
+        Me.SeparadorOpciones.Name = "SeparadorOpciones"
+        Me.SeparadorOpciones.Size = New System.Drawing.Size(197, 6)
+        '
+        'MenuTemas
+        '
+        Me.MenuTemas.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.MenuTemaClasico, Me.MenuTemaOscuroAzul, Me.MenuTemaMatriz, Me.MenuTemaRetro})
+        Me.MenuTemas.Name = "MenuTemas"
+        Me.MenuTemas.Size = New System.Drawing.Size(200, 22)
+        Me.MenuTemas.Text = "&Temas de Color"
+        '
+        'MenuTemaClasico
+        '
+        Me.MenuTemaClasico.Checked = True
+        Me.MenuTemaClasico.CheckState = System.Windows.Forms.CheckState.Checked
+        Me.MenuTemaClasico.Name = "MenuTemaClasico"
+        Me.MenuTemaClasico.Size = New System.Drawing.Size(200, 22)
+        Me.MenuTemaClasico.Text = "&Clásico"
+        '
+        'MenuTemaOscuroAzul
+        '
+        Me.MenuTemaOscuroAzul.Name = "MenuTemaOscuroAzul"
+        Me.MenuTemaOscuroAzul.Size = New System.Drawing.Size(200, 22)
+        Me.MenuTemaOscuroAzul.Text = "&Oscuro Azul"
+        '
+        'MenuTemaMatriz
+        '
+        Me.MenuTemaMatriz.Name = "MenuTemaMatriz"
+        Me.MenuTemaMatriz.Size = New System.Drawing.Size(200, 22)
+        Me.MenuTemaMatriz.Text = "&Matriz (Verde)"
+        '
+        'MenuTemaRetro
+        '
+        Me.MenuTemaRetro.Name = "MenuTemaRetro"
+        Me.MenuTemaRetro.Size = New System.Drawing.Size(200, 22)
+        Me.MenuTemaRetro.Text = "&Retro"
+        '
+        'MenuEstadisticas
+        '
+        Me.MenuEstadisticas.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.MenuVerEstadisticas, Me.MenuVerHistorial, Me.SeparadorEstadisticas, Me.MenuReiniciarEstadisticas})
+        Me.MenuEstadisticas.Name = "MenuEstadisticas"
+        Me.MenuEstadisticas.Size = New System.Drawing.Size(82, 20)
+        Me.MenuEstadisticas.Text = "E&stadísticas"
+        '
+        'MenuVerEstadisticas
+        '
+        Me.MenuVerEstadisticas.Name = "MenuVerEstadisticas"
+        Me.MenuVerEstadisticas.Size = New System.Drawing.Size(200, 22)
+        Me.MenuVerEstadisticas.Text = "&Ver Estadísticas"
+        '
+        'MenuVerHistorial
+        '
+        Me.MenuVerHistorial.Name = "MenuVerHistorial"
+        Me.MenuVerHistorial.Size = New System.Drawing.Size(200, 22)
+        Me.MenuVerHistorial.Text = "Ver &Historial"
+        '
+        'SeparadorEstadisticas
+        '
+        Me.SeparadorEstadisticas.Name = "SeparadorEstadisticas"
+        Me.SeparadorEstadisticas.Size = New System.Drawing.Size(197, 6)
+        '
+        'MenuReiniciarEstadisticas
+        '
+        Me.MenuReiniciarEstadisticas.Name = "MenuReiniciarEstadisticas"
+        Me.MenuReiniciarEstadisticas.Size = New System.Drawing.Size(200, 22)
+        Me.MenuReiniciarEstadisticas.Text = "&Reiniciar Estadísticas"
         '
         'BarraEstado
         '
@@ -154,6 +249,19 @@ Partial Class Form1
     Friend WithEvents SeparadorArchivo As ToolStripSeparator
     Friend WithEvents MenuSalir As ToolStripMenuItem
     Friend WithEvents MenuEditar As ToolStripMenuItem
+    Friend WithEvents MenuOpciones As ToolStripMenuItem
+    Friend WithEvents MenuRadianes As ToolStripMenuItem
+    Friend WithEvents SeparadorOpciones As ToolStripSeparator
+    Friend WithEvents MenuTemas As ToolStripMenuItem
+    Friend WithEvents MenuTemaClasico As ToolStripMenuItem
+    Friend WithEvents MenuTemaOscuroAzul As ToolStripMenuItem
+    Friend WithEvents MenuTemaMatriz As ToolStripMenuItem
+    Friend WithEvents MenuTemaRetro As ToolStripMenuItem
+    Friend WithEvents MenuEstadisticas As ToolStripMenuItem
+    Friend WithEvents MenuVerEstadisticas As ToolStripMenuItem
+    Friend WithEvents MenuVerHistorial As ToolStripMenuItem
+    Friend WithEvents SeparadorEstadisticas As ToolStripSeparator
+    Friend WithEvents MenuReiniciarEstadisticas As ToolStripMenuItem
     Friend WithEvents BarraEstado As StatusStrip
     Friend WithEvents LabelModo As ToolStripStatusLabel
     Friend WithEvents LabelPosicion As ToolStripStatusLabel

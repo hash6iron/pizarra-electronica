@@ -41,8 +41,12 @@ Una aplicación de escritorio tipo pizarra electrónica diseñada para que los n
 #### Operaciones Avanzadas
 - **Exponentes**: `2^3=8` (se visualiza como 2³)
 - **Funciones trigonométricas**: `sin(90)=1`, `cos(0)=1`, `tan(45)=1`
+  - Soporte de **radianes**: Menú Opciones > Usar Radianes
 - **Raíces cuadradas**: `sqrt(16)=4`
-- **Combinaciones**: `2^2+3^2=13`, `sin(30)+cos(60)=1`
+- **Logaritmos**: `log(100)=2` (base 10), `ln(2.718)=1` (natural)
+- **Exponencial**: `exp(1)=2.718`, `exp(0)=1`
+- **Valor absoluto**: `abs(-5)=5`
+- **Combinaciones**: `2^2+3^2=13`, `sin(30)+cos(60)=1`, `log(100)+ln(e)=3`
 
 #### Ecuaciones con Incógnita (x)
 - Lineales: `2x+2=12 -> x=5`
@@ -58,6 +62,32 @@ Una aplicación de escritorio tipo pizarra electrónica diseñada para que los n
 - ✅ **Verde**: Respuesta correcta
 - ❌ **Rojo**: Respuesta incorrecta (muestra `[respuesta_correcta]`)
 - **Blanco**: Sin validar
+
+### 📊 Estadísticas y Progreso
+
+- **Historial de Ejercicios**: Guarda todos los ejercicios completados con fecha/hora
+- **Estadísticas de Sesión**:
+  - Total de ejercicios realizados
+  - Ejercicios correctos e incorrectos
+  - Porcentaje de aciertos
+- **Ver Historial**: Muestra los últimos 20 ejercicios con sus resultados
+- **Reiniciar Estadísticas**: Limpia el historial y contadores
+
+### 🎨 Temas de Color Personalizables
+
+Elige entre 4 temas visuales en **Opciones > Temas de Color**:
+
+1. **Clásico** 🖤: Fondo negro, texto blanco, verde/rojo para validación
+2. **Oscuro Azul** 🌌: Tonos azulados modernos, cursor cyan
+3. **Matriz** 💚: Estilo Matrix con tonos verdes sobre negro
+4. **Retro** 💙: Azul retro con texto amarillento
+
+Cada tema ajusta:
+- Color de fondo
+- Color de texto normal
+- Colores de validación (correcto/incorrecto)
+- Color del cursor
+- Color de selección
 
 ### 💾 Gestión de Archivos
 
@@ -77,6 +107,7 @@ Muestra constantemente:
 - Posición del cursor (Línea, Columna)
 - Modo EDICIÓN (cuando está activo)
 - Modo SOBREESCRIBIR (cuando INSERT está activo)
+- **RAD** (cuando está en modo radianes)
 
 ## 🚀 Requisitos
 
@@ -199,12 +230,15 @@ Si encuentras algún bug, por favor abre un [issue](https://github.com/TU_USUARI
 
 ## 🔮 Próximas Características
 
-- [ ] Más funciones matemáticas (logaritmos, exponenciales)
-- [ ] Soporte para radianes en funciones trigonométricas
-- [ ] Historial de ejercicios completados
-- [ ] Estadísticas de progreso
-- [ ] Temas de color personalizables
+- [x] ✅ Más funciones matemáticas (logaritmos, exponenciales, valor absoluto)
+- [x] ✅ Soporte para radianes en funciones trigonométricas
+- [x] ✅ Historial de ejercicios completados
+- [x] ✅ Estadísticas de progreso
+- [x] ✅ Temas de color personalizables (4 temas disponibles)
+- [ ] Representación gráfica de ecuaciones (dibujar curvas)
 - [ ] Exportar a PDF
+- [ ] Modo de examen con temporizador
+- [ ] Generador automático de ejercicios
 
 ---
 

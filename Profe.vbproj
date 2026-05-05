@@ -105,6 +105,9 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <None Include=".gitignore" />
+    <None Include="INSTRUCCIONES_GITHUB.md" />
+    <None Include="LICENSE" />
     <None Include="My Project\Application.myapp">
       <Generator>MyApplicationCodeGenerator</Generator>
       <LastGenOutput>Application.Designer.vb</LastGenOutput>
@@ -115,6 +118,7 @@
       <LastGenOutput>Settings.Designer.vb</LastGenOutput>
     </None>
     <None Include="App.config" />
+    <None Include="README.md" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
 </Project>
