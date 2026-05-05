@@ -284,10 +284,12 @@
                     ' En modo EDICIÓN, movimiento libre
                     If cursorX > 0 Then cursorX -= 1
                 Else
-                    ' En modo NO EDICIÓN, moverse dentro del campo o buscar otro campo
-                    If cursorX > 0 AndAlso esCampoResultado(cursorY, cursorX - 1) Then
-                        ' La posición a la izquierda es parte del mismo campo
-                        cursorX -= 1
+                    ' En modo NO EDICIÓN, moverse solo dentro de campos de resultado
+                    If cursorX > 0 Then
+                        ' Solo moverse si estamos en un campo y la siguiente posición también es campo
+                        If esCampoResultado(cursorY, cursorX) AndAlso esCampoResultado(cursorY, cursorX - 1) Then
+                            cursorX -= 1
+                        End If
                     End If
                 End If
                 If shiftPresionado Then ActualizarFinSeleccion()
@@ -303,10 +305,12 @@
                     ' En modo EDICIÓN, movimiento libre
                     If cursorX < COLUMNAS - 1 Then cursorX += 1
                 Else
-                    ' En modo NO EDICIÓN, moverse dentro del campo o buscar otro campo
-                    If cursorX < COLUMNAS - 1 AndAlso esCampoResultado(cursorY, cursorX + 1) Then
-                        ' La posición a la derecha es parte del mismo campo
-                        cursorX += 1
+                    ' En modo NO EDICIÓN, moverse solo dentro de campos de resultado
+                    If cursorX < COLUMNAS - 1 Then
+                        ' Solo moverse si estamos en un campo y la siguiente posición también es campo
+                        If esCampoResultado(cursorY, cursorX) AndAlso esCampoResultado(cursorY, cursorX + 1) Then
+                            cursorX += 1
+                        End If
                     End If
                 End If
                 If shiftPresionado Then ActualizarFinSeleccion()
@@ -1688,6 +1692,54 @@
 
     ' Función para restaurar las R cuando se vuelve a modo EDICIÓN
     Private Sub RestaurarCamposResultado()
+        ' Primero, limpiar mensajes de error y soluciones
+        For y = 0 To FILAS - 1
+            Dim lineaTexto As String = ""
+            For x = 0 To COLUMNAS - 1
+                lineaTexto &= pizarra(y, x)
+            Next
+
+            ' Buscar y eliminar patrones [texto] que son mensajes de error
+            Dim posInicio As Integer = lineaTexto.IndexOf("["c)
+            While posInicio >= 0
+                Dim posFin As Integer = lineaTexto.IndexOf("]"c, posInicio)
+                If posFin > posInicio Then
+                    ' Limpiar todo desde [ hasta ] inclusive
+                    For x = posInicio To posFin
+                        If x < COLUMNAS Then
+                            pizarra(y, x) = " "c
+                            Dim config = ObtenerTema(temaActual)
+                            colores(y, x) = config.ColorTexto
+                        End If
+                    Next
+                    ' Actualizar lineaTexto para buscar más corchetes
+                    lineaTexto = ""
+                    For x = 0 To COLUMNAS - 1
+                        lineaTexto &= pizarra(y, x)
+                    Next
+                    posInicio = lineaTexto.IndexOf("["c)
+                Else
+                    Exit While
+                End If
+            End While
+
+            ' Buscar y eliminar patrones " -> x=" que son soluciones de ecuaciones
+            Dim posFlecha As Integer = lineaTexto.IndexOf(" -> ")
+            If posFlecha >= 0 Then
+                ' Limpiar desde " -> " hasta el final de la expresión
+                For x = posFlecha To COLUMNAS - 1
+                    If pizarra(y, x) <> " "c Then
+                        pizarra(y, x) = " "c
+                        Dim config = ObtenerTema(temaActual)
+                        colores(y, x) = config.ColorTexto
+                    Else
+                        Exit For
+                    End If
+                Next
+            End If
+        Next
+
+        ' Restaurar las R en los campos de resultado
         For y = 0 To FILAS - 1
             For x = 0 To COLUMNAS - 1
                 If esCampoResultado(y, x) Then
@@ -1695,6 +1747,7 @@
                 End If
             Next
         Next
+
         ' Limpiar los marcadores
         For y = 0 To FILAS - 1
             For x = 0 To COLUMNAS - 1
