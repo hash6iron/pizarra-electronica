@@ -422,6 +422,8 @@
                     ' Pasando de EDICIÓN a NO EDICIÓN: detectar campos
                     MenuEditar.Checked = False
                     DetectarCamposResultado()
+                    ' Mover el cursor al primer campo de resultado
+                    MoverCursorPrimerCampo()
                 Else
                     ' Pasando de NO EDICIÓN a EDICIÓN: restaurar las R
                     MenuEditar.Checked = True
@@ -1804,5 +1806,20 @@
                 If encontrado Then Exit For
             Next
         End If
+    End Sub
+
+    ' Función para mover el cursor al primer campo de resultado (arriba-izquierda)
+    Private Sub MoverCursorPrimerCampo()
+        ' Buscar el primer campo de resultado desde arriba-izquierda
+        For y = 0 To FILAS - 1
+            For x = 0 To COLUMNAS - 1
+                If esCampoResultado(y, x) Then
+                    cursorX = x
+                    cursorY = y
+                    PanelPizarra.Invalidate()
+                    Return
+                End If
+            Next
+        Next
     End Sub
 End Class
