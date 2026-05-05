@@ -77,8 +77,12 @@ Public Class FormGrafico
     End Function
 
     Private Function EvaluarExpresion(expresion As String, valorX As Double) As Double
+        ' Reemplazar pi/PI por el valor de Math.PI
+        Dim expr As String = expresion
+        expr = System.Text.RegularExpressions.Regex.Replace(expr, "\bpi\b", Math.PI.ToString(System.Globalization.CultureInfo.InvariantCulture), System.Text.RegularExpressions.RegexOptions.IgnoreCase)
+
         ' Reemplazar x por el valor
-        Dim expr As String = expresion.Replace("x", valorX.ToString(System.Globalization.CultureInfo.InvariantCulture))
+        expr = expr.Replace("x", valorX.ToString(System.Globalization.CultureInfo.InvariantCulture))
 
         ' Expandir multiplicación implícita
         expr = System.Text.RegularExpressions.Regex.Replace(expr, "(\d)\(", "$1*(")

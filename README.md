@@ -40,6 +40,9 @@ Una aplicación de escritorio tipo pizarra electrónica diseñada para que los n
 
 #### Operaciones Avanzadas
 - **Exponentes**: `2^3=8` (se visualiza como 2³)
+- **Constante PI**: `pi` o `PI` (se visualiza como π en modo NO EDICIÓN)
+  - Expresiones compactas: `2pi`, `2PI`, `3.14pi`
+  - En funciones: `cos(2pi)=1`, `sin(pi/2)=1`, `2pi*sin(x)`
 - **Funciones trigonométricas**: `sin(90)=1`, `cos(0)=1`, `tan(45)=1`
   - Soporte de **radianes**: Menú Opciones > Usar Radianes
 - **Raíces cuadradas**: `sqrt(16)=4`
@@ -97,11 +100,12 @@ Cada tema ajusta:
 - **Menú Ver > Graficar Función (F5)**: Abre el diálogo de graficación
 - **Funciones soportadas**:
   - Polinómicas: `x^2`, `x^3-2*x+1`
-  - Trigonométricas: `sin(x)`, `cos(x)`, `tan(x)`
+  - Trigonométricas: `sin(x)`, `cos(x)`, `tan(x)`, `sin(2pi*x)`
   - Exponenciales: `exp(x)`, `2^x`
   - Logarítmicas: `log(x)`, `ln(x)`
   - Raíces: `sqrt(x)`
   - Valor absoluto: `abs(x)`
+  - Con constante PI: `cos(2pi)`, `sin(pi/2)`, `2pi*x`
   - Combinaciones: `sin(x)*cos(x)`, `x^2+sin(x)`
 
 #### Controles Interactivos:

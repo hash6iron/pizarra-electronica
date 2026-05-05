@@ -153,9 +153,28 @@
                 Dim posY As Integer = y * TAMANO_CHAR
                 Dim estaSeleccionado As Boolean = EstaDentroSeleccion(x, y)
 
-                ' En modo NO EDICIÓN, detectar y dibujar superíndices
+                ' En modo NO EDICIÓN, detectar y dibujar superíndices y símbolos especiales
                 Dim esSuperindice As Boolean = False
                 Dim saltarCaracter As Boolean = False
+                Dim caracterDibujar As String = pizarra(y, x).ToString()
+
+                ' Detectar "pi" y convertir a símbolo π en modo NO EDICIÓN
+                If Not MenuEditar.Checked AndAlso x < COLUMNAS - 1 Then
+                    If (pizarra(y, x) = "p"c OrElse pizarra(y, x) = "P"c) AndAlso 
+                       (pizarra(y, x + 1) = "i"c OrElse pizarra(y, x + 1) = "I"c) Then
+                        ' Encontramos "pi" o "PI", reemplazar por símbolo π
+                        caracterDibujar = "π"
+                        ' Marcar el siguiente carácter para saltar
+                        If x + 1 < COLUMNAS Then
+                            ' El siguiente "i" se saltará
+                        End If
+                    ElseIf x > 0 AndAlso 
+                           (pizarra(y, x - 1) = "p"c OrElse pizarra(y, x - 1) = "P"c) AndAlso 
+                           (pizarra(y, x) = "i"c OrElse pizarra(y, x) = "I"c) Then
+                        ' Este es el "i" de "pi", saltarlo
+                        saltarCaracter = True
+                    End If
+                End If
 
                 If Not MenuEditar.Checked AndAlso x < COLUMNAS - 1 AndAlso pizarra(y, x) = "^"c Then
                     ' Encontramos ^, saltarlo visualmente y acumular offset
@@ -172,9 +191,9 @@
                         g.FillRectangle(brochaCursor, posX, posY, TAMANO_CHAR, TAMANO_CHAR)
                         Dim brochaNegra As New SolidBrush(config.ColorFondo)
                         If esSuperindice Then
-                            g.DrawString(pizarra(y, x).ToString(), fuenteSuperindice, brochaNegra, posX, posY - 4)
+                            g.DrawString(caracterDibujar, fuenteSuperindice, brochaNegra, posX, posY - 4)
                         Else
-                            g.DrawString(pizarra(y, x).ToString(), fuente, brochaNegra, posX, posY)
+                            g.DrawString(caracterDibujar, fuente, brochaNegra, posX, posY)
                         End If
                         brochaNegra.Dispose()
                     ElseIf estaSeleccionado Then
@@ -183,17 +202,17 @@
                         brochaFondoSeleccion.Dispose()
                         Dim brochaSeleccion As New SolidBrush(config.ColorTexto)
                         If esSuperindice Then
-                            g.DrawString(pizarra(y, x).ToString(), fuenteSuperindice, brochaSeleccion, posX, posY - 4)
+                            g.DrawString(caracterDibujar, fuenteSuperindice, brochaSeleccion, posX, posY - 4)
                         Else
-                            g.DrawString(pizarra(y, x).ToString(), fuente, brochaSeleccion, posX, posY)
+                            g.DrawString(caracterDibujar, fuente, brochaSeleccion, posX, posY)
                         End If
                         brochaSeleccion.Dispose()
                     Else
                         Dim brocha As New SolidBrush(colores(y, x))
                         If esSuperindice Then
-                            g.DrawString(pizarra(y, x).ToString(), fuenteSuperindice, brocha, posX, posY - 4)
+                            g.DrawString(caracterDibujar, fuenteSuperindice, brocha, posX, posY - 4)
                         Else
-                            g.DrawString(pizarra(y, x).ToString(), fuente, brocha, posX, posY)
+                            g.DrawString(caracterDibujar, fuente, brocha, posX, posY)
                         End If
                         brocha.Dispose()
                     End If
@@ -537,6 +556,9 @@
 
     Private Function EvaluarExpresion(expresion As String) As Double
         expresion = expresion.Replace(" ", "")
+
+        ' Reemplazar PI por su valor (case insensitive)
+        expresion = System.Text.RegularExpressions.Regex.Replace(expresion, "\bpi\b", Math.PI.ToString(System.Globalization.CultureInfo.InvariantCulture), System.Text.RegularExpressions.RegexOptions.IgnoreCase)
 
         ' Expandir notación implícita antes de evaluar
         expresion = ExpandirNotacionImplicita(expresion)
