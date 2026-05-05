@@ -1,11 +1,16 @@
 ﻿Public Class Form1
-    Private Const COLUMNAS As Integer = 80
-    Private Const FILAS As Integer = 25
+    ' Límites máximos
+    Private Const MAX_COLUMNAS As Integer = 200
+    Private Const MAX_FILAS As Integer = 100
     Private Const TAMANO_CHAR As Integer = 16
 
-    Private pizarra(FILAS - 1, COLUMNAS - 1) As Char
-    Private colores(FILAS - 1, COLUMNAS - 1) As Color
-    Private esCampoResultado(FILAS - 1, COLUMNAS - 1) As Boolean ' Marca las celdas que son campos de resultado
+    ' Dimensiones dinámicas
+    Private COLUMNAS As Integer = 80
+    Private FILAS As Integer = 25
+
+    Private pizarra(MAX_FILAS - 1, MAX_COLUMNAS - 1) As Char
+    Private colores(MAX_FILAS - 1, MAX_COLUMNAS - 1) As Color
+    Private esCampoResultado(MAX_FILAS - 1, MAX_COLUMNAS - 1) As Boolean ' Marca las celdas que son campos de resultado
     Private cursorX As Integer = 0
     Private cursorY As Integer = 0
     Private parpadeo As Boolean = True
@@ -104,22 +109,51 @@
     End Class
 
     Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        InicializarPizarra()
-        ConfigurarTimer()
-        ActualizarBarraEstado()
-
         ' Habilitar doble buffer para eliminar el parpadeo
         PanelPizarra.GetType().InvokeMember("DoubleBuffered",
             Reflection.BindingFlags.SetProperty Or Reflection.BindingFlags.Instance Or Reflection.BindingFlags.NonPublic,
             Nothing, PanelPizarra, New Object() {True})
 
         Me.WindowState = FormWindowState.Maximized
+
+        ' Calcular dimensiones basadas en el tamaño de la ventana
+        CalcularDimensionesPizarra()
+        InicializarPizarra()
+        ConfigurarTimer()
+        ActualizarBarraEstado()
+    End Sub
+
+    Private Sub Form1_Resize(sender As Object, e As EventArgs) Handles MyBase.Resize
+        ' Recalcular dimensiones cuando cambia el tamaño de la ventana
+        If Me.WindowState <> FormWindowState.Minimized Then
+            CalcularDimensionesPizarra()
+            PanelPizarra.Invalidate()
+        End If
+    End Sub
+
+    Private Sub CalcularDimensionesPizarra()
+        ' Calcular cuántas columnas y filas caben en el panel
+        Dim anchoPanelUtil As Integer = PanelPizarra.ClientSize.Width
+        Dim altoPanelUtil As Integer = PanelPizarra.ClientSize.Height
+
+        ' Calcular columnas y filas que caben
+        Dim columnasCalculadas As Integer = Math.Max(1, anchoPanelUtil \ TAMANO_CHAR)
+        Dim filasCalculadas As Integer = Math.Max(1, altoPanelUtil \ TAMANO_CHAR)
+
+        ' Aplicar límites máximos
+        COLUMNAS = Math.Min(columnasCalculadas, MAX_COLUMNAS)
+        FILAS = Math.Min(filasCalculadas, MAX_FILAS)
+
+        ' Asegurar que el cursor no se salga de los límites
+        If cursorX >= COLUMNAS Then cursorX = COLUMNAS - 1
+        If cursorY >= FILAS Then cursorY = FILAS - 1
     End Sub
 
     Private Sub InicializarPizarra()
         Dim config = ObtenerTema(temaActual)
-        For y = 0 To FILAS - 1
-            For x = 0 To COLUMNAS - 1
+        ' Inicializar todo el array (usar MAX para cubrir todo)
+        For y = 0 To MAX_FILAS - 1
+            For x = 0 To MAX_COLUMNAS - 1
                 pizarra(y, x) = " "c
                 colores(y, x) = config.ColorTexto
                 esCampoResultado(y, x) = False

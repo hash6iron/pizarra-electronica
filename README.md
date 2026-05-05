@@ -25,8 +25,13 @@ Una aplicación de escritorio tipo pizarra electrónica diseñada para que los n
 
 ### ✨ Funcionalidades de Edición
 
+- **Pizarra dinámica adaptable**:
+  - Tamaño automático según la ventana (hasta 200x100 caracteres máximo)
+  - Se adapta al redimensionar la ventana
+  - El cursor siempre permanece dentro de los límites visibles
+
 - **Navegación completa con teclado**:
-  - Cursores para moverse por la pizarra (80x25 caracteres)
+  - Cursores para moverse por la pizarra
   - HOME/END inteligentes (primera pulsación = primer/último carácter, segunda = inicio/fin absoluto)
   - BACKSPACE avanzado (salta a línea anterior inteligentemente)
   - TAB/SHIFT+TAB con tab stops cada 4 columnas
