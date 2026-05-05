@@ -160,16 +160,14 @@
 
                 ' Detectar "pi" y convertir a símbolo π en modo NO EDICIÓN
                 If Not MenuEditar.Checked AndAlso x < COLUMNAS - 1 Then
-                    If (pizarra(y, x) = "p"c OrElse pizarra(y, x) = "P"c) AndAlso 
+                    If (pizarra(y, x) = "p"c OrElse pizarra(y, x) = "P"c) AndAlso
                        (pizarra(y, x + 1) = "i"c OrElse pizarra(y, x + 1) = "I"c) Then
-                        ' Encontramos "pi" o "PI", reemplazar por símbolo π
+                        ' Encontramos "pi" o "PI", reemplazar por símbolo π y quitar espacio extra
                         caracterDibujar = "π"
-                        ' Marcar el siguiente carácter para saltar
-                        If x + 1 < COLUMNAS Then
-                            ' El siguiente "i" se saltará
-                        End If
-                    ElseIf x > 0 AndAlso 
-                           (pizarra(y, x - 1) = "p"c OrElse pizarra(y, x - 1) = "P"c) AndAlso 
+                        ' Acumular offset para quitar el espacio del "i"
+                        offsetAcumulado += TAMANO_CHAR
+                    ElseIf x > 0 AndAlso
+                           (pizarra(y, x - 1) = "p"c OrElse pizarra(y, x - 1) = "P"c) AndAlso
                            (pizarra(y, x) = "i"c OrElse pizarra(y, x) = "I"c) Then
                         ' Este es el "i" de "pi", saltarlo
                         saltarCaracter = True
