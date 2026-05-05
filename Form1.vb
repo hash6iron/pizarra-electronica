@@ -5,6 +5,7 @@
 
     Private pizarra(FILAS - 1, COLUMNAS - 1) As Char
     Private colores(FILAS - 1, COLUMNAS - 1) As Color
+    Private esCampoResultado(FILAS - 1, COLUMNAS - 1) As Boolean ' Marca las celdas que son campos de resultado
     Private cursorX As Integer = 0
     Private cursorY As Integer = 0
     Private parpadeo As Boolean = True
@@ -121,6 +122,7 @@
             For x = 0 To COLUMNAS - 1
                 pizarra(y, x) = " "c
                 colores(y, x) = config.ColorTexto
+                esCampoResultado(y, x) = False
             Next
         Next
         PanelPizarra.BackColor = config.ColorFondo
@@ -143,6 +145,7 @@
         Dim fuenteSuperindice As New Font("Courier New", 8, FontStyle.Bold)
         Dim config = ObtenerTema(temaActual)
         Dim brochaCursor As New SolidBrush(config.ColorCursor)
+        Dim brochaFondoCampo As New SolidBrush(Color.FromArgb(50, 50, 50)) ' Sombreado para campos de resultado
 
         For y = 0 To FILAS - 1
             Dim x As Integer = 0
@@ -184,6 +187,11 @@
                     posX = (x - 1) * TAMANO_CHAR - (offsetAcumulado - (TAMANO_CHAR - 10)) + 10 ' Posicionarlo cerca de la base
                 End If
 
+                ' Dibujar fondo sombreado para campos de resultado
+                If esCampoResultado(y, x) Then
+                    g.FillRectangle(brochaFondoCampo, posX, posY, TAMANO_CHAR, TAMANO_CHAR)
+                End If
+
                 If Not saltarCaracter Then
                     If x = cursorX AndAlso y = cursorY AndAlso parpadeo Then
                         g.FillRectangle(brochaCursor, posX, posY, TAMANO_CHAR, TAMANO_CHAR)
@@ -223,6 +231,7 @@
         fuente.Dispose()
         fuenteSuperindice.Dispose()
         brochaCursor.Dispose()
+        brochaFondoCampo.Dispose()
     End Sub
 
     Private Sub Form1_KeyDown(sender As Object, e As KeyEventArgs) Handles MyBase.KeyDown
@@ -271,7 +280,18 @@
                 Else
                     haySeleccion = False
                 End If
-                If cursorX > 0 Then cursorX -= 1
+                If cursorX > 0 Then
+                    If MenuEditar.Checked Then
+                        cursorX -= 1
+                    Else
+                        ' En modo NO EDICIÓN, solo moverse dentro de campos de resultado
+                        Dim nuevoX As Integer = cursorX - 1
+                        While nuevoX >= 0 AndAlso Not esCampoResultado(cursorY, nuevoX)
+                            nuevoX -= 1
+                        End While
+                        If nuevoX >= 0 Then cursorX = nuevoX
+                    End If
+                End If
                 If shiftPresionado Then ActualizarFinSeleccion()
                 e.Handled = True
 
@@ -281,7 +301,18 @@
                 Else
                     haySeleccion = False
                 End If
-                If cursorX < COLUMNAS - 1 Then cursorX += 1
+                If cursorX < COLUMNAS - 1 Then
+                    If MenuEditar.Checked Then
+                        cursorX += 1
+                    Else
+                        ' En modo NO EDICIÓN, solo moverse dentro de campos de resultado
+                        Dim nuevoX As Integer = cursorX + 1
+                        While nuevoX < COLUMNAS AndAlso Not esCampoResultado(cursorY, nuevoX)
+                            nuevoX += 1
+                        End While
+                        If nuevoX < COLUMNAS Then cursorX = nuevoX
+                    End If
+                End If
                 If shiftPresionado Then ActualizarFinSeleccion()
                 e.Handled = True
 
@@ -306,7 +337,10 @@
                 e.Handled = True
 
             Case Keys.Back
-                If cursorX > 0 Then
+                ' En modo NO EDICIÓN, solo permitir borrar en campos de resultado
+                If Not MenuEditar.Checked AndAlso Not esCampoResultado(cursorY, cursorX) Then
+                    e.Handled = True
+                ElseIf cursorX > 0 Then
                     cursorX -= 1
                     pizarra(cursorY, cursorX) = " "c
                 ElseIf cursorY > 0 Then
@@ -322,7 +356,10 @@
                 e.Handled = True
 
             Case Keys.Delete
-                If haySeleccion Then
+                ' En modo NO EDICIÓN, solo permitir borrar en campos de resultado
+                If Not MenuEditar.Checked AndAlso Not esCampoResultado(cursorY, cursorX) Then
+                    e.Handled = True
+                ElseIf haySeleccion Then
                     EliminarSeleccion()
                 Else
                     ' Eliminar carácter actual y traer el texto de la derecha
@@ -382,6 +419,10 @@
             Case Keys.F2
                 ' Alternar modo EDICIÓN / COMPROBACIÓN
                 MenuEditar.Checked = Not MenuEditar.Checked
+                ' Si pasamos a modo NO EDICIÓN, detectar campos de resultado
+                If Not MenuEditar.Checked Then
+                    DetectarCamposResultado()
+                End If
                 e.Handled = True
         End Select
 
@@ -393,6 +434,12 @@
         Dim c As Char = e.KeyChar
 
         If Char.IsLetterOrDigit(c) OrElse "+-*/=.,()^ ".Contains(c) Then
+            ' En modo NO EDICIÓN, solo permitir escritura en campos de resultado
+            If Not MenuEditar.Checked AndAlso Not esCampoResultado(cursorY, cursorX) Then
+                e.Handled = True
+                Return
+            End If
+
             If haySeleccion Then
                 EliminarSeleccion()
             End If
@@ -409,7 +456,10 @@
             End If
 
             If cursorX < COLUMNAS - 1 Then
-                cursorX += 1
+                ' Solo avanzar si la siguiente posición también es campo de resultado o estamos en modo EDICIÓN
+                If MenuEditar.Checked OrElse esCampoResultado(cursorY, cursorX + 1) Then
+                    cursorX += 1
+                End If
             End If
 
             pizarraModificada = True
@@ -1583,5 +1633,111 @@
         End If
 
         PanelPizarra.Invalidate()
+    End Sub
+
+    ' Función para detectar y marcar campos de resultado (RRRR)
+    Private Sub DetectarCamposResultado()
+        ' Limpiar todos los campos de resultado existentes
+        For y = 0 To FILAS - 1
+            For x = 0 To COLUMNAS - 1
+                esCampoResultado(y, x) = False
+            Next
+        Next
+
+        ' Buscar patrones RRRR en toda la pizarra
+        For y = 0 To FILAS - 1
+            Dim lineaTexto As String = ""
+            For x = 0 To COLUMNAS - 1
+                lineaTexto &= pizarra(y, x)
+            Next
+
+            ' Buscar secuencias de R después del signo =
+            Dim posIgual As Integer = lineaTexto.IndexOf("="c)
+            If posIgual >= 0 AndAlso posIgual < COLUMNAS - 1 Then
+                ' Buscar secuencias de R después del =
+                Dim inicioR As Integer = -1
+                For x = posIgual + 1 To COLUMNAS - 1
+                    If pizarra(y, x) = "R"c OrElse pizarra(y, x) = "r"c Then
+                        If inicioR = -1 Then
+                            inicioR = x
+                        End If
+                    Else
+                        ' Si encontramos una secuencia de R, marcarla como campo de resultado
+                        If inicioR >= 0 Then
+                            For rx = inicioR To x - 1
+                                esCampoResultado(y, rx) = True
+                                pizarra(y, rx) = " "c ' Limpiar las R para dejar el campo vacío
+                            Next
+                            inicioR = -1
+                        End If
+                        ' Salir del bucle si encontramos algo que no es espacio después de la secuencia
+                        If pizarra(y, x) <> " "c Then
+                            Exit For
+                        End If
+                    End If
+                Next
+                ' Procesar si terminó la línea con R
+                If inicioR >= 0 Then
+                    For rx = inicioR To COLUMNAS - 1
+                        If pizarra(y, rx) = "R"c OrElse pizarra(y, rx) = "r"c Then
+                            esCampoResultado(y, rx) = True
+                            pizarra(y, rx) = " "c
+                        Else
+                            Exit For
+                        End If
+                    Next
+                End If
+            End If
+        Next
+        PanelPizarra.Invalidate()
+    End Sub
+
+    ' Función para verificar si una posición es editable en modo NO EDICIÓN
+    Private Function EsPosicionEditable(x As Integer, y As Integer) As Boolean
+        If MenuEditar.Checked Then
+            ' En modo EDICIÓN, todo es editable
+            Return True
+        Else
+            ' En modo NO EDICIÓN, solo los campos de resultado son editables
+            Return esCampoResultado(y, x)
+        End If
+    End Function
+
+    ' Función para mover el cursor al siguiente campo de resultado
+    Private Sub MoverCursorSiguienteCampo()
+        ' Buscar el siguiente campo de resultado
+        Dim encontrado As Boolean = False
+        Dim yInicio As Integer = cursorY
+        Dim xInicio As Integer = cursorX + 1
+
+        ' Buscar desde la posición actual hacia adelante
+        For y = yInicio To FILAS - 1
+            Dim xStart As Integer = If(y = yInicio, xInicio, 0)
+            For x = xStart To COLUMNAS - 1
+                If esCampoResultado(y, x) Then
+                    cursorX = x
+                    cursorY = y
+                    encontrado = True
+                    Exit For
+                End If
+            Next
+            If encontrado Then Exit For
+        Next
+
+        ' Si no se encontró, buscar desde el inicio
+        If Not encontrado Then
+            For y = 0 To yInicio
+                Dim xEnd As Integer = If(y = yInicio, xInicio - 1, COLUMNAS - 1)
+                For x = 0 To xEnd
+                    If esCampoResultado(y, x) Then
+                        cursorX = x
+                        cursorY = y
+                        encontrado = True
+                        Exit For
+                    End If
+                Next
+                If encontrado Then Exit For
+            Next
+        End If
     End Sub
 End Class

@@ -12,11 +12,16 @@ Una aplicación de escritorio tipo pizarra electrónica diseñada para que los n
   - INTRO realiza retorno de carro
   - Auto-completado de `=` en operaciones
   - Saltos de línea inteligentes (SHIFT+INTRO = 1 línea, INTRO = 2 líneas)
+  - **Campos de resultado**: Define campos con `=RRRR` (tantas R como espacio necesites)
+    - Ejemplo: `2+2=RRRR` crea un campo de 4 caracteres para la respuesta
 
 - **Modo COMPROBACIÓN**: El niño resuelve ejercicios
   - INTRO valida la respuesta automáticamente
   - Navegación automática a la siguiente operación
   - Superíndices elegantes para exponentes (2³ en vez de 2^3)
+  - **Campos protegidos**: Solo se puede escribir en los campos de resultado (sombreados)
+  - Las teclas de navegación saltan entre campos de resultado
+
 
 ### ✨ Funcionalidades de Edición
 
