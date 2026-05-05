@@ -8,13 +8,13 @@
     Private COLUMNAS As Integer = 80
     Private FILAS As Integer = 25
 
-    Private pizarra(MAX_FILAS - 1, MAX_COLUMNAS - 1) As Char
-    Private colores(MAX_FILAS - 1, MAX_COLUMNAS - 1) As Color
-    Private esCampoResultado(MAX_FILAS - 1, MAX_COLUMNAS - 1) As Boolean ' Marca las celdas que son campos de resultado
+    Private pizarra(,) As Char
+    Private colores(,) As Color
+    Private esCampoResultado(,) As Boolean
     Private cursorX As Integer = 0
     Private cursorY As Integer = 0
     Private parpadeo As Boolean = True
-    Private WithEvents timerCursor As New Timer()
+    Private WithEvents timerCursor As Timer
 
     Private haySeleccion As Boolean = False
     Private selStartX As Integer = 0
@@ -29,28 +29,12 @@
     Private pizarraModificada As Boolean = False
     Private usarRadianes As Boolean = False
 
-    Private historialEjercicios As New List(Of EjercicioHistorial)
+    Private historialEjercicios As List(Of EjercicioHistorial)
     Private ejerciciosCorrectos As Integer = 0
     Private ejerciciosIncorrectos As Integer = 0
     Private ejerciciosTotales As Integer = 0
 
     Private temaActual As TemaColor = TemaColor.Clasico
-
-    Public Enum TemaColor
-        Clasico
-        OscuroAzul
-        Matriz
-        Retro
-    End Enum
-
-    Public Class ConfiguracionTema
-        Public Property ColorFondo As Color
-        Public Property ColorTexto As Color
-        Public Property ColorCorrecto As Color
-        Public Property ColorIncorrecto As Color
-        Public Property ColorCursor As Color
-        Public Property ColorSeleccion As Color
-    End Class
 
     Private Function ObtenerTema(tema As TemaColor) As ConfiguracionTema
         Dim config As New ConfiguracionTema()
@@ -92,27 +76,15 @@
         Return config
     End Function
 
-    Public Class EjercicioHistorial
-        Public Property Ejercicio As String
-        Public Property RespuestaUsuario As String
-        Public Property RespuestaCorrecta As String
-        Public Property EsCorrecto As Boolean
-        Public Property Fecha As DateTime
-
-        Public Sub New(ej As String, respUsr As String, respCorr As String, correcto As Boolean)
-            Ejercicio = ej
-            RespuestaUsuario = respUsr
-            RespuestaCorrecta = respCorr
-            EsCorrecto = correcto
-            Fecha = DateTime.Now
-        End Sub
-    End Class
-
     Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        ' Habilitar doble buffer para eliminar el parpadeo
-        PanelPizarra.GetType().InvokeMember("DoubleBuffered",
-            Reflection.BindingFlags.SetProperty Or Reflection.BindingFlags.Instance Or Reflection.BindingFlags.NonPublic,
-            Nothing, PanelPizarra, New Object() {True})
+        ' Inicializar arrays
+        ReDim pizarra(MAX_FILAS - 1, MAX_COLUMNAS - 1)
+        ReDim colores(MAX_FILAS - 1, MAX_COLUMNAS - 1)
+        ReDim esCampoResultado(MAX_FILAS - 1, MAX_COLUMNAS - 1)
+
+        ' Inicializar objetos
+        timerCursor = New Timer()
+        historialEjercicios = New List(Of EjercicioHistorial)
 
         Me.WindowState = FormWindowState.Maximized
 
@@ -351,24 +323,34 @@
                 e.Handled = True
 
             Case Keys.Up
-                If shiftPresionado Then
-                    IniciarOActualizarSeleccion()
+                ' En modo NO EDICIÓN, no permitir movimiento vertical
+                If Not MenuEditar.Checked Then
+                    e.Handled = True
                 Else
-                    haySeleccion = False
+                    If shiftPresionado Then
+                        IniciarOActualizarSeleccion()
+                    Else
+                        haySeleccion = False
+                    End If
+                    If cursorY > 0 Then cursorY -= 1
+                    If shiftPresionado Then ActualizarFinSeleccion()
+                    e.Handled = True
                 End If
-                If cursorY > 0 Then cursorY -= 1
-                If shiftPresionado Then ActualizarFinSeleccion()
-                e.Handled = True
 
             Case Keys.Down
-                If shiftPresionado Then
-                    IniciarOActualizarSeleccion()
+                ' En modo NO EDICIÓN, no permitir movimiento vertical
+                If Not MenuEditar.Checked Then
+                    e.Handled = True
                 Else
-                    haySeleccion = False
+                    If shiftPresionado Then
+                        IniciarOActualizarSeleccion()
+                    Else
+                        haySeleccion = False
+                    End If
+                    If cursorY < FILAS - 1 Then cursorY += 1
+                    If shiftPresionado Then ActualizarFinSeleccion()
+                    e.Handled = True
                 End If
-                If cursorY < FILAS - 1 Then cursorY += 1
-                If shiftPresionado Then ActualizarFinSeleccion()
-                e.Handled = True
 
             Case Keys.Back
                 ' En modo NO EDICIÓN, solo permitir borrar en campos de resultado
@@ -473,7 +455,12 @@
     Private Sub Form1_KeyPress(sender As Object, e As KeyPressEventArgs) Handles MyBase.KeyPress
         Dim c As Char = e.KeyChar
 
-        If Char.IsLetterOrDigit(c) OrElse "+-*/=.,()^ ".Contains(c) Then
+        ' Convertir punto en coma automáticamente para separador decimal
+        If c = "."c Then
+            c = ","c
+        End If
+
+        If Char.IsLetterOrDigit(c) OrElse "+-*/=.,()^<> ".Contains(c) Then
             ' En modo NO EDICIÓN, solo permitir escritura en campos de resultado
             If Not MenuEditar.Checked AndAlso Not esCampoResultado(cursorY, cursorX) Then
                 e.Handled = True
@@ -513,6 +500,33 @@
 
         If String.IsNullOrWhiteSpace(lineaTexto) Then Return
 
+        ' Verificar si hay contenido en los campos de resultado antes de validar
+        If Not MenuEditar.Checked Then
+            Dim hayCamposResultado As Boolean = False
+            Dim camposTienenContenido As Boolean = False
+
+            For x = 0 To COLUMNAS - 1
+                If esCampoResultado(cursorY, x) Then
+                    hayCamposResultado = True
+                    If pizarra(cursorY, x) <> " "c Then
+                        camposTienenContenido = True
+                        Exit For
+                    End If
+                End If
+            Next
+
+            ' Si hay campos de resultado pero están vacíos, no validar
+            If hayCamposResultado AndAlso Not camposTienenContenido Then
+                Return
+            End If
+        End If
+
+        ' Verificar si es una ecuación con formato flecha: 2x+1=0 -> x=resultado
+        If lineaTexto.Contains("->") AndAlso lineaTexto.Contains("x") Then
+            ValidarEcuacionConFlecha(lineaTexto)
+            Return
+        End If
+
         ' Extraer la operación (cadena continua sin espacios que contiene =)
         Dim operacion As String = ExtraerOperacion(lineaTexto)
 
@@ -538,7 +552,10 @@
             Dim resultadoCorrecto As Double = EvaluarExpresion(expresion)
             Dim resultadoUsuarioNum As Double
 
-            If Double.TryParse(resultadoUsuario, resultadoUsuarioNum) Then
+            ' Normalizar el separador decimal antes de parsear
+            resultadoUsuario = NormalizarSeparadorDecimal(resultadoUsuario)
+
+            If Double.TryParse(resultadoUsuario, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, resultadoUsuarioNum) Then
                 Dim correcto As Boolean = Math.Abs(resultadoCorrecto - resultadoUsuarioNum) < 0.001
                 Dim config = ObtenerTema(temaActual)
 
@@ -561,49 +578,205 @@
         End Try
     End Sub
 
-    Private Sub ValidarEcuacion(operacion As String, partes() As String)
+    Private Sub ValidarEcuacionConFlecha(lineaCompleta As String)
         Try
-            ' Formato esperado: ecuacion -> x=resultado
-            ' Ej: 2x+2=12 -> x=5
-            Dim ecuacion As String = partes(0).Trim()
-            Dim ladoDerecho As String = partes(1).Trim()
             Dim config = ObtenerTema(temaActual)
 
-            ' Verificar si el usuario puso x=resultado
-            If ladoDerecho.StartsWith("x=", StringComparison.OrdinalIgnoreCase) Then
-                Dim resultadoUsuarioStr As String = ladoDerecho.Substring(2).Trim()
-                Dim resultadoUsuario As Double
+            ' Dividir por la flecha
+            Dim partesFlecha() As String = lineaCompleta.Split(New String() {"->"}, StringSplitOptions.None)
+            If partesFlecha.Length <> 2 Then Return
 
-                If Double.TryParse(resultadoUsuarioStr, resultadoUsuario) Then
-                    ' Resolver la ecuación
-                    Dim solucion As Double = ResolverEcuacion(ecuacion)
+            Dim parteEcuacion As String = partesFlecha(0).Trim()  ' 2x+1=0
+            Dim parteRespuesta As String = partesFlecha(1).Trim() ' x=-0.5
 
-                    If Not Double.IsNaN(solucion) Then
-                        Dim correcto As Boolean = Math.Abs(solucion - resultadoUsuario) < 0.001
+            ' Extraer ecuación (parte izquierda y derecha del =)
+            Dim partesEcuacion() As String = parteEcuacion.Split("="c)
+            If partesEcuacion.Length <> 2 Then Return
 
-                        If correcto Then
-                            ColorearOperacion(cursorY, operacion, config.ColorCorrecto)
-                            ejerciciosCorrectos += 1
-                        Else
-                            ColorearOperacion(cursorY, operacion, config.ColorIncorrecto)
-                            AgregarResultadoEcuacion(solucion, operacion)
-                            ejerciciosIncorrectos += 1
+            Dim ladoIzquierdo As String = partesEcuacion(0).Trim() ' 2x+1
+            Dim ladoDerecho As String = partesEcuacion(1).Trim()    ' 0
+
+            ' Verificar que la respuesta sea x=numero
+            If Not (parteRespuesta.StartsWith("x=", StringComparison.OrdinalIgnoreCase) OrElse 
+                    parteRespuesta.StartsWith("x =", StringComparison.OrdinalIgnoreCase)) Then
+                Return
+            End If
+
+            ' Extraer el resultado del usuario
+            Dim posIgual As Integer = parteRespuesta.IndexOf("=")
+            Dim resultadoUsuarioStr As String = parteRespuesta.Substring(posIgual + 1).Trim()
+
+            ' Normalizar el separador decimal
+            resultadoUsuarioStr = NormalizarSeparadorDecimal(resultadoUsuarioStr)
+            Dim resultadoUsuario As Double
+
+            If Not Double.TryParse(resultadoUsuarioStr, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, resultadoUsuario) Then Return
+
+            ' Resolver la ecuación: ladoIzquierdo = ladoDerecho
+            ' Normalizar el separador decimal
+            ladoDerecho = NormalizarSeparadorDecimal(ladoDerecho)
+            Dim valorDerecho As Double
+            If Not Double.TryParse(ladoDerecho, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, valorDerecho) Then Return
+
+            Dim solucion As Double = ResolverEcuacionConValor(ladoIzquierdo, valorDerecho)
+
+            If Double.IsNaN(solucion) Then
+                ColorearLineaCompleta(cursorY, config.ColorIncorrecto)
+                Return
+            End If
+
+            ' Comparar con tolerancia
+            Dim correcto As Boolean = Math.Abs(solucion - resultadoUsuario) < 0.1
+
+            If correcto Then
+                ColorearLineaCompleta(cursorY, config.ColorCorrecto)
+                ejerciciosCorrectos += 1
+            Else
+                ColorearLineaCompleta(cursorY, config.ColorIncorrecto)
+
+                ' Agregar el resultado correcto al final
+                Dim lineaActual As String = ObtenerLineaActual()
+                ' Mostrar con coma como separador decimal
+                Dim textoCorreccion As String = " [x=" & solucion.ToString("F2").Replace(".", ",") & "]"
+
+                ' Buscar la posición después del último carácter no vacío
+                Dim ultimaPos As Integer = -1
+                For x = 0 To COLUMNAS - 1
+                    If pizarra(cursorY, x) <> " "c Then
+                        ultimaPos = x
+                    End If
+                Next
+
+                If ultimaPos >= 0 AndAlso ultimaPos < COLUMNAS - textoCorreccion.Length Then
+                    Dim posInicio As Integer = ultimaPos + 1
+                    For i = 0 To textoCorreccion.Length - 1
+                        If posInicio + i < COLUMNAS Then
+                            pizarra(cursorY, posInicio + i) = textoCorreccion(i)
+                            colores(cursorY, posInicio + i) = config.ColorIncorrecto
+                        End If
+                    Next
+                End If
+
+                ejerciciosIncorrectos += 1
+            End If
+
+            ejerciciosTotales += 1
+            historialEjercicios.Add(New EjercicioHistorial(parteEcuacion, "x=" & resultadoUsuario.ToString(), "x=" & solucion.ToString(), correcto))
+            PanelPizarra.Invalidate()
+
+        Catch ex As Exception
+            Dim config = ObtenerTema(temaActual)
+            ColorearLineaCompleta(cursorY, config.ColorIncorrecto)
+        End Try
+    End Sub
+
+    Private Sub ValidarEcuacion(operacion As String, partes() As String)
+        Try
+            ' Formato esperado: ecuacion=valor -> x=resultado
+            ' Ej: 2x+1=0 -> x=-0.5
+            Dim ecuacion As String = partes(0).Trim()
+            Dim config = ObtenerTema(temaActual)
+
+            ' Buscar si hay un "->" en la línea que separa la ecuación de la respuesta
+            Dim lineaCompleta As String = ObtenerLineaActual()
+            Dim posFlecha As Integer = lineaCompleta.IndexOf("->")
+
+            If posFlecha >= 0 Then
+                ' Hay formato con flecha: 2x+1=0 -> x=RR
+                ' Extraer la parte después de la flecha
+                Dim parteRespuesta As String = lineaCompleta.Substring(posFlecha + 2).Trim()
+
+                ' Verificar si el usuario puso x=resultado
+                If parteRespuesta.StartsWith("x=", StringComparison.OrdinalIgnoreCase) OrElse 
+                   parteRespuesta.StartsWith("x =", StringComparison.OrdinalIgnoreCase) Then
+
+                    Dim resultadoUsuarioStr As String = parteRespuesta.Substring(parteRespuesta.IndexOf("=") + 1).Trim()
+                    Dim resultadoUsuario As Double
+
+                    If Double.TryParse(resultadoUsuarioStr, resultadoUsuario) Then
+                        ' Resolver la ecuación ecuacion=valor donde valor está en partes(1)
+                        Dim ladoDerecho As String = partes(1).Trim()
+                        ' Extraer solo el número antes de ->
+                        Dim posicionFlecha As Integer = ladoDerecho.IndexOf("->")
+                        If posicionFlecha >= 0 Then
+                            ladoDerecho = ladoDerecho.Substring(0, posicionFlecha).Trim()
                         End If
 
-                        ejerciciosTotales += 1
-                        historialEjercicios.Add(New EjercicioHistorial(ecuacion, "x=" & resultadoUsuario.ToString(), "x=" & solucion.ToString(), correcto))
-                    Else
-                        ColorearOperacion(cursorY, operacion, config.ColorIncorrecto)
+                        Dim valorDerecho As Double
+                        If Double.TryParse(ladoDerecho, valorDerecho) Then
+                            Dim solucion As Double = ResolverEcuacionConValor(ecuacion, valorDerecho)
+
+                            If Not Double.IsNaN(solucion) Then
+                                Dim correcto As Boolean = Math.Abs(solucion - resultadoUsuario) < 0.01
+
+                                If correcto Then
+                                    ColorearLineaCompleta(cursorY, config.ColorCorrecto)
+                                    ejerciciosCorrectos += 1
+                                Else
+                                    ColorearLineaCompleta(cursorY, config.ColorIncorrecto)
+                                    ' Mostrar la solución correcta
+                                    Dim textoCorreccion As String = $" [x={solucion:F2}]"
+                                    Dim posInicio As Integer = lineaCompleta.Length
+                                    For i = 0 To textoCorreccion.Length - 1
+                                        If posInicio + i < COLUMNAS Then
+                                            pizarra(cursorY, posInicio + i) = textoCorreccion(i)
+                                            colores(cursorY, posInicio + i) = config.ColorIncorrecto
+                                        End If
+                                    Next
+                                    ejerciciosIncorrectos += 1
+                                End If
+
+                                ejerciciosTotales += 1
+                                historialEjercicios.Add(New EjercicioHistorial(ecuacion & "=" & ladoDerecho, "x=" & resultadoUsuario.ToString(), "x=" & solucion.ToString(), correcto))
+                            End If
+                        End If
                     End If
                 End If
             Else
-                ' El usuario aún no ha puesto x=, buscar el valor correcto
-                Dim valorDerecho As Double
-                If Double.TryParse(ladoDerecho, valorDerecho) Then
-                    Dim solucion As Double = ResolverEcuacionConValor(ecuacion, valorDerecho)
-                    If Not Double.IsNaN(solucion) Then
-                        ' Agregar -> x= al final si no está
-                        AgregarSolucionEcuacion(solucion, operacion)
+                ' Formato antiguo sin flecha
+                Dim ladoDerecho As String = partes(1).Trim()
+
+                ' Verificar si el usuario puso x=resultado
+                If ladoDerecho.StartsWith("x=", StringComparison.OrdinalIgnoreCase) Then
+                    Dim resultadoUsuarioStr As String = ladoDerecho.Substring(2).Trim()
+
+                    ' Normalizar el separador decimal
+                    resultadoUsuarioStr = NormalizarSeparadorDecimal(resultadoUsuarioStr)
+                    Dim resultadoUsuario As Double
+
+                    If Double.TryParse(resultadoUsuarioStr, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, resultadoUsuario) Then
+                        ' Resolver la ecuación
+                        Dim solucion As Double = ResolverEcuacion(ecuacion)
+
+                        If Not Double.IsNaN(solucion) Then
+                            Dim correcto As Boolean = Math.Abs(solucion - resultadoUsuario) < 0.001
+
+                            If correcto Then
+                                ColorearOperacion(cursorY, operacion, config.ColorCorrecto)
+                                ejerciciosCorrectos += 1
+                            Else
+                                ColorearOperacion(cursorY, operacion, config.ColorIncorrecto)
+                                AgregarResultadoEcuacion(solucion, operacion)
+                                ejerciciosIncorrectos += 1
+                            End If
+
+                            ejerciciosTotales += 1
+                            historialEjercicios.Add(New EjercicioHistorial(ecuacion, "x=" & resultadoUsuario.ToString(), "x=" & solucion.ToString(), correcto))
+                        Else
+                            ColorearOperacion(cursorY, operacion, config.ColorIncorrecto)
+                        End If
+                    End If
+                Else
+                    ' El usuario aún no ha puesto x=, buscar el valor correcto
+                    ' Normalizar el separador decimal
+                    ladoDerecho = NormalizarSeparadorDecimal(ladoDerecho)
+                    Dim valorDerecho As Double
+                    If Double.TryParse(ladoDerecho, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, valorDerecho) Then
+                        Dim solucion As Double = ResolverEcuacionConValor(ecuacion, valorDerecho)
+                        If Not Double.IsNaN(solucion) Then
+                            ' Agregar -> x= al final si no está
+                            AgregarSolucionEcuacion(solucion, operacion)
+                        End If
                     End If
                 End If
             End If
@@ -612,6 +785,15 @@
             Dim config = ObtenerTema(temaActual)
             ColorearOperacion(cursorY, operacion, config.ColorIncorrecto)
         End Try
+    End Sub
+
+    Private Sub ColorearLineaCompleta(linea As Integer, color As Color)
+        For x = 0 To COLUMNAS - 1
+            If pizarra(linea, x) <> " "c Then
+                colores(linea, x) = color
+            End If
+        Next
+        PanelPizarra.Invalidate()
     End Sub
 
     Private Function ExtraerOperacion(lineaTexto As String) As String
@@ -646,6 +828,9 @@
     Private Function EvaluarExpresion(expresion As String) As Double
         expresion = expresion.Replace(" ", "")
 
+        ' Normalizar separador decimal: reemplazar coma por punto para cálculos internos
+        expresion = NormalizarSeparadorDecimal(expresion)
+
         ' Reemplazar PI por su valor (case insensitive)
         expresion = System.Text.RegularExpressions.Regex.Replace(expresion, "\bpi\b", Math.PI.ToString(System.Globalization.CultureInfo.InvariantCulture), System.Text.RegularExpressions.RegexOptions.IgnoreCase)
 
@@ -654,6 +839,11 @@
 
         ' Usar evaluación avanzada que soporta funciones trigonométricas, exponentes, etc.
         Return EvaluarExpresionAvanzada(expresion)
+    End Function
+
+    Private Function NormalizarSeparadorDecimal(texto As String) As String
+        ' Reemplazar coma por punto para que funcione con Double.Parse y cálculos
+        Return texto.Replace(","c, "."c)
     End Function
 
     Private Sub ColorearLinea(linea As Integer, color As Color)
@@ -682,7 +872,8 @@
     End Sub
 
     Private Sub AgregarResultadoCorrecto(resultadoCorrecto As Double, operacion As String)
-        Dim textoResultado As String = $" [{resultadoCorrecto}]"
+        ' Mostrar con coma como separador decimal
+        Dim textoResultado As String = " [" & resultadoCorrecto.ToString().Replace(".", ",") & "]"
         Dim lineaTexto As String = ObtenerLineaActual()
         Dim posOperacion As Integer = lineaTexto.IndexOf(operacion)
         Dim config = ObtenerTema(temaActual)
@@ -731,10 +922,21 @@
     End Sub
 
     Private Sub MoverCursorSiguienteLineaComprobacion()
-        ' Primero validar el cálculo de la línea actual si tiene contenido
+        ' Primero validar el cálculo de la línea actual si tiene contenido en campos
         ValidarCalculo()
 
-        ' Buscar la siguiente línea con una operación (que contenga =)
+        ' Buscar si hay más campos de resultado en la misma línea después del cursor
+        Dim encontradoEnLinea As Boolean = False
+        For x = cursorX + 1 To COLUMNAS - 1
+            If esCampoResultado(cursorY, x) Then
+                cursorX = x
+                encontradoEnLinea = True
+                PanelPizarra.Invalidate()
+                Return
+            End If
+        Next
+
+        ' Si no hay más campos en esta línea, buscar la siguiente línea con operación
         Dim lineaBuscada As Integer = cursorY + 1
         Dim encontrada As Boolean = False
 
@@ -742,9 +944,15 @@
         For y = lineaBuscada To FILAS - 1
             If LineaContieneOperacion(y) Then
                 cursorY = y
-                cursorX = ObtenerPosicionDespuesIgual(y)
-                encontrada = True
-                Exit For
+                ' Buscar el primer campo de resultado en esta línea
+                For x = 0 To COLUMNAS - 1
+                    If esCampoResultado(y, x) Then
+                        cursorX = x
+                        encontrada = True
+                        Exit For
+                    End If
+                Next
+                If encontrada Then Exit For
             End If
         Next
 
@@ -753,9 +961,15 @@
             For y = 0 To cursorY - 1
                 If LineaContieneOperacion(y) Then
                     cursorY = y
-                    cursorX = ObtenerPosicionDespuesIgual(y)
-                    encontrada = True
-                    Exit For
+                    ' Buscar el primer campo de resultado en esta línea
+                    For x = 0 To COLUMNAS - 1
+                        If esCampoResultado(y, x) Then
+                            cursorX = x
+                            encontrada = True
+                            Exit For
+                        End If
+                    Next
+                    If encontrada Then Exit For
                 End If
             Next
         End If
@@ -1258,6 +1472,9 @@
 
     Private Sub AbrirArchivo(rutaArchivo As String)
         Try
+            ' Limpiar todo el contenido de la pizarra antes de cargar el archivo
+            InicializarPizarra()
+
             Using lector As New System.IO.StreamReader(rutaArchivo, System.Text.Encoding.UTF8)
                 For y = 0 To FILAS - 1
                     ' Leer línea de texto
@@ -1680,48 +1897,35 @@
     Private Sub DetectarCamposResultado()
         ' Buscar patrones RRRR en toda la pizarra
         For y = 0 To FILAS - 1
-            Dim lineaTexto As String = ""
-            For x = 0 To COLUMNAS - 1
-                lineaTexto &= pizarra(y, x)
-            Next
-
-            ' Buscar secuencias de R después del signo =
-            Dim posIgual As Integer = lineaTexto.IndexOf("="c)
-            If posIgual >= 0 AndAlso posIgual < COLUMNAS - 1 Then
-                ' Buscar secuencias de R después del =
-                Dim inicioR As Integer = -1
-                For x = posIgual + 1 To COLUMNAS - 1
-                    If pizarra(y, x) = "R"c OrElse pizarra(y, x) = "r"c Then
-                        If inicioR = -1 Then
-                            inicioR = x
-                        End If
-                    Else
-                        ' Si encontramos una secuencia de R, marcarla como campo de resultado
-                        If inicioR >= 0 Then
-                            For rx = inicioR To x - 1
-                                esCampoResultado(y, rx) = True
-                                pizarra(y, rx) = " "c ' Limpiar las R para dejar el campo vacío
-                            Next
-                            inicioR = -1
-                        End If
-                        ' Salir del bucle si encontramos algo que no es espacio después de la secuencia
-                        If pizarra(y, x) <> " "c Then
-                            Exit For
-                        End If
-                    End If
-                Next
-                ' Procesar si terminó la línea con R
-                If inicioR >= 0 Then
-                    For rx = inicioR To COLUMNAS - 1
-                        If pizarra(y, rx) = "R"c OrElse pizarra(y, rx) = "r"c Then
-                            esCampoResultado(y, rx) = True
-                            pizarra(y, rx) = " "c
-                        Else
+            ' Buscar todas las secuencias de R en la línea
+            Dim xPos As Integer = 0
+            While xPos < COLUMNAS
+                ' Detectar inicio de secuencia de R
+                If pizarra(y, xPos) = "R"c OrElse pizarra(y, xPos) = "r"c Then
+                    ' Verificar que haya un = antes (en la misma línea)
+                    Dim hayIgualAntes As Boolean = False
+                    For xAntes = 0 To xPos - 1
+                        If pizarra(y, xAntes) = "="c Then
+                            hayIgualAntes = True
                             Exit For
                         End If
                     Next
+
+                    If hayIgualAntes Then
+                        ' Marcar toda la secuencia de R como campo de resultado
+                        Dim inicioR As Integer = xPos
+                        While xPos < COLUMNAS AndAlso (pizarra(y, xPos) = "R"c OrElse pizarra(y, xPos) = "r"c)
+                            esCampoResultado(y, xPos) = True
+                            pizarra(y, xPos) = " "c ' Limpiar las R para dejar el campo vacío
+                            xPos += 1
+                        End While
+                    Else
+                        xPos += 1
+                    End If
+                Else
+                    xPos += 1
                 End If
-            End If
+            End While
         Next
         PanelPizarra.Invalidate()
     End Sub
@@ -1856,4 +2060,155 @@
             Next
         Next
     End Sub
+
+    ' Manejadores del menú Ayuda
+    Private Sub MenuComoUsar_Click(sender As Object, e As EventArgs) Handles MenuComoUsar.Click
+        MostrarAyuda()
+    End Sub
+
+    Private Sub MenuAtajosTeclado_Click(sender As Object, e As EventArgs) Handles MenuAtajosTeclado.Click
+        MostrarAtajosTeclado()
+    End Sub
+
+    Private Sub MenuAcercaDe_Click(sender As Object, e As EventArgs) Handles MenuAcercaDe.Click
+        MostrarAcercaDe()
+    End Sub
+
+    Private Sub MostrarAyuda()
+        Dim ayuda As String = "═══════════════════════════════════════════════════════════════" & vbCrLf &
+                              "   PIZARRA ELECTRÓNICA - GUÍA DE USO" & vbCrLf &
+                              "═══════════════════════════════════════════════════════════════" & vbCrLf & vbCrLf &
+                              "MODOS DE TRABAJO:" & vbCrLf &
+                              "─────────────────" & vbCrLf &
+                              "• MODO EDICIÓN (F2): Para crear ejercicios y escribir libremente" & vbCrLf &
+                              "  - Navegación libre con flechas por toda la pizarra" & vbCrLf &
+                              "  - Escribe operaciones matemáticas" & vbCrLf &
+                              "  - Marca campos de resultado con la letra 'R'" & vbCrLf & vbCrLf &
+                              "• MODO COMPROBACIÓN (F2): Para resolver ejercicios" & vbCrLf &
+                              "  - Solo puedes escribir en campos marcados con 'R'" & vbCrLf &
+                              "  - Navegación con TAB entre ejercicios" & vbCrLf &
+                              "  - ENTER para validar respuestas" & vbCrLf &
+                              "  - Verde = Correcto, Rojo = Incorrecto" & vbCrLf & vbCrLf &
+                              "OPERACIONES SOPORTADAS:" & vbCrLf &
+                              "───────────────────────" & vbCrLf &
+                              "• Aritméticas básicas: + - * / ^" & vbCrLf &
+                              "  Ejemplo: 5+3*2=R" & vbCrLf & vbCrLf &
+                              "• Funciones trigonométricas: sin, cos, tan" & vbCrLf &
+                              "  Ejemplo: sin(30)=R" & vbCrLf & vbCrLf &
+                              "• Raíz cuadrada: sqrt" & vbCrLf &
+                              "  Ejemplo: sqrt(16)=R" & vbCrLf & vbCrLf &
+                              "• Constante PI (se escribe 'pi')" & vbCrLf &
+                              "  Ejemplo: 2*pi=R" & vbCrLf & vbCrLf &
+                              "• Potencias con ^" & vbCrLf &
+                              "  Ejemplo: 2^3=R   (se mostrará como 2³)" & vbCrLf & vbCrLf &
+                              "• Ecuaciones lineales con x" & vbCrLf &
+                              "  Ejemplo: 2x+5=15 → x=R" & vbCrLf & vbCrLf &
+                              "CARACTERÍSTICAS ESPECIALES:" & vbCrLf &
+                              "──────────────────────────" & vbCrLf &
+                              "• Los campos 'R' se muestran sombreados en modo EDICIÓN" & vbCrLf &
+                              "• En modo NO EDICIÓN, la 'R' desaparece y muestra el campo vacío" & vbCrLf &
+                              "• Al validar, verás el resultado correcto si te equivocas" & vbCrLf &
+                              "• Estadísticas de aciertos/errores disponibles en el menú" & vbCrLf &
+                              "• Múltiples temas de color para personalizar" & vbCrLf & vbCrLf &
+                              "GRAFICADOR DE FUNCIONES (F5):" & vbCrLf &
+                              "─────────────────────────────" & vbCrLf &
+                              "• Grafica funciones matemáticas en una ventana separada" & vbCrLf &
+                              "• Soporta: sin(x), cos(x), tan(x), sqrt(x), x^2, etc." & vbCrLf &
+                              "• Usa zoom y desplazamiento con el ratón" & vbCrLf &
+                              "• Botones +/- para zoom, Reset para volver al origen" & vbCrLf & vbCrLf &
+                              "CONSEJOS:" & vbCrLf &
+                              "─────────" & vbCrLf &
+                              "• Presiona F1 en cualquier momento para ver esta ayuda" & vbCrLf &
+                              "• Usa CTRL+S para guardar tu trabajo" & vbCrLf &
+                              "• Alterna entre grados/radianes en Opciones" & vbCrLf &
+                              "• El modo insertar/sobreescribir se cambia con INSERT" & vbCrLf
+
+        MessageBox.Show(ayuda, "Ayuda - Pizarra Electrónica",
+                       MessageBoxButtons.OK, MessageBoxIcon.Information)
+    End Sub
+
+    Private Sub MostrarAtajosTeclado()
+        Dim atajos As String = "═══════════════════════════════════════════════════════════════" & vbCrLf &
+                               "   ATAJOS DE TECLADO" & vbCrLf &
+                               "═══════════════════════════════════════════════════════════════" & vbCrLf & vbCrLf &
+                               "NAVEGACIÓN:" & vbCrLf &
+                               "───────────" & vbCrLf &
+                               "  Flechas        → Mover cursor (solo en modo EDICIÓN)" & vbCrLf &
+                               "  TAB            → Siguiente campo/ejercicio" & vbCrLf &
+                               "  SHIFT+TAB      → Campo/ejercicio anterior" & vbCrLf &
+                               "  HOME           → Inicio de línea (primer carácter)" & vbCrLf &
+                               "  HOME x2        → Inicio de línea (columna 0)" & vbCrLf &
+                               "  END            → Fin de línea (último carácter)" & vbCrLf &
+                               "  END x2         → Fin de línea (columna 79)" & vbCrLf & vbCrLf &
+                               "EDICIÓN:" & vbCrLf &
+                               "────────" & vbCrLf &
+                               "  ENTER          → Validar ejercicio / Nueva línea" & vbCrLf &
+                               "  SHIFT+ENTER    → Nueva línea (salto simple)" & vbCrLf &
+                               "  BACKSPACE      → Borrar carácter anterior" & vbCrLf &
+                               "  DELETE         → Borrar carácter actual" & vbCrLf &
+                               "  ESC            → Limpiar línea actual" & vbCrLf &
+                               "  INSERT         → Alternar modo Insertar/Sobreescribir" & vbCrLf & vbCrLf &
+                               "PORTAPAPELES:" & vbCrLf &
+                               "─────────────" & vbCrLf &
+                               "  CTRL+C         → Copiar selección" & vbCrLf &
+                               "  CTRL+X         → Cortar selección" & vbCrLf &
+                               "  CTRL+V         → Pegar" & vbCrLf &
+                               "  SHIFT+Flechas  → Seleccionar texto" & vbCrLf & vbCrLf &
+                               "ARCHIVO:" & vbCrLf &
+                               "────────" & vbCrLf &
+                               "  CTRL+O         → Abrir archivo" & vbCrLf &
+                               "  CTRL+S         → Guardar archivo" & vbCrLf &
+                               "  ALT+F4         → Salir de la aplicación" & vbCrLf & vbCrLf &
+                               "FUNCIONES:" & vbCrLf &
+                               "──────────" & vbCrLf &
+                               "  F1             → Mostrar ayuda" & vbCrLf &
+                               "  F2             → Alternar modo EDICIÓN/COMPROBACIÓN" & vbCrLf &
+                               "  F5             → Abrir graficador de funciones" & vbCrLf
+
+        MessageBox.Show(atajos, "Atajos de Teclado",
+                       MessageBoxButtons.OK, MessageBoxIcon.Information)
+    End Sub
+
+    Private Sub MostrarAcercaDe()
+        Dim acercaDe As String = "═══════════════════════════════════════════════════════════════" & vbCrLf &
+                                 "   PIZARRA ELECTRÓNICA" & vbCrLf &
+                                 "═══════════════════════════════════════════════════════════════" & vbCrLf & vbCrLf &
+                                 "Versión: 1.0" & vbCrLf &
+                                 "Año: 2024" & vbCrLf & vbCrLf &
+                                 "DESCRIPCIÓN:" & vbCrLf &
+                                 "──────────────" & vbCrLf &
+                                 "Aplicación educativa para la práctica de cálculos matemáticos." & vbCrLf &
+                                 "Permite crear ejercicios personalizados y validar respuestas" & vbCrLf &
+                                 "automáticamente con retroalimentación visual inmediata." & vbCrLf & vbCrLf &
+                                 "CARACTERÍSTICAS:" & vbCrLf &
+                                 "────────────────" & vbCrLf &
+                                 "✓ Dos modos de trabajo: Edición y Comprobación" & vbCrLf &
+                                 "✓ Validación automática de operaciones" & vbCrLf &
+                                 "✓ Soporte para funciones trigonométricas" & vbCrLf &
+                                 "✓ Resolución de ecuaciones lineales" & vbCrLf &
+                                 "✓ Graficador de funciones interactivo" & vbCrLf &
+                                 "✓ Estadísticas de rendimiento" & vbCrLf &
+                                 "✓ Múltiples temas de color" & vbCrLf &
+                                 "✓ Guardado y carga de ejercicios" & vbCrLf & vbCrLf &
+                                 "TECNOLOGÍA:" & vbCrLf &
+                                 "───────────" & vbCrLf &
+                                 "Desarrollado en Visual Basic .NET" & vbCrLf &
+                                 "Framework: .NET Framework 4.7.2" & vbCrLf &
+                                 "Windows Forms Application" & vbCrLf & vbCrLf &
+                                 "────────────────────────────────────────────────────────────────" & vbCrLf &
+                                 "© 2024 - Herramienta educativa de código abierto" & vbCrLf &
+                                 "────────────────────────────────────────────────────────────────"
+
+        MessageBox.Show(acercaDe, "Acerca de Pizarra Electrónica",
+                       MessageBoxButtons.OK, MessageBoxIcon.Information)
+    End Sub
+
+    ' Manejador para tecla F1 (Ayuda)
+    Protected Overrides Function ProcessCmdKey(ByRef msg As Message, keyData As Keys) As Boolean
+        If keyData = Keys.F1 Then
+            MostrarAyuda()
+            Return True
+        End If
+        Return MyBase.ProcessCmdKey(msg, keyData)
+    End Function
 End Class

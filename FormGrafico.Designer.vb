@@ -105,7 +105,7 @@ Partial Class FormGrafico
         Me.LabelAyuda.Name = "LabelAyuda"
         Me.LabelAyuda.Size = New System.Drawing.Size(338, 58)
         Me.LabelAyuda.TabIndex = 4
-        Me.LabelAyuda.Text = "💡 Usa la rueda del ratón para hacer zoom" & Global.Microsoft.VisualBasic.ChrW(13) & Global.Microsoft.VisualBasic.ChrW(10) & "💡 Arrastra con el botón izquierdo para desplazarte" & Global.Microsoft.VisualBasic.ChrW(13) & Global.Microsoft.VisualBasic.ChrW(10) & "💡 Botones +/- para zoom, Reset para volver al origen"
+        Me.LabelAyuda.Text = "• Usa la rueda del ratón para hacer zoom" & Global.Microsoft.VisualBasic.ChrW(13) & Global.Microsoft.VisualBasic.ChrW(10) & "• Arrastra con el botón izquierdo para desplazarte" & Global.Microsoft.VisualBasic.ChrW(13) & Global.Microsoft.VisualBasic.ChrW(10) & "• Botones +/- para zoom, Reset para volver al origen"
         Me.LabelAyuda.TextAlign = System.Drawing.ContentAlignment.TopRight
         '
         'FormGrafico

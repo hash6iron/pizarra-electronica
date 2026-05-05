@@ -22,7 +22,7 @@ Partial Class Form1
     'No lo modifique con el editor de código.
     <System.Diagnostics.DebuggerStepThrough()> _
     Private Sub InitializeComponent()
-        Me.PanelPizarra = New System.Windows.Forms.Panel()
+        Me.PanelPizarra = New DoubleBufferedPanel()
         Me.MenuPrincipal = New System.Windows.Forms.MenuStrip()
         Me.MenuArchivo = New System.Windows.Forms.ToolStripMenuItem()
         Me.MenuAbrir = New System.Windows.Forms.ToolStripMenuItem()
@@ -46,6 +46,11 @@ Partial Class Form1
         Me.MenuVerHistorial = New System.Windows.Forms.ToolStripMenuItem()
         Me.SeparadorEstadisticas = New System.Windows.Forms.ToolStripSeparator()
         Me.MenuReiniciarEstadisticas = New System.Windows.Forms.ToolStripMenuItem()
+        Me.MenuAyuda = New System.Windows.Forms.ToolStripMenuItem()
+        Me.MenuComoUsar = New System.Windows.Forms.ToolStripMenuItem()
+        Me.MenuAtajosTeclado = New System.Windows.Forms.ToolStripMenuItem()
+        Me.SeparadorAyuda = New System.Windows.Forms.ToolStripSeparator()
+        Me.MenuAcercaDe = New System.Windows.Forms.ToolStripMenuItem()
         Me.BarraEstado = New System.Windows.Forms.StatusStrip()
         Me.LabelModo = New System.Windows.Forms.ToolStripStatusLabel()
         Me.LabelPosicion = New System.Windows.Forms.ToolStripStatusLabel()
@@ -64,7 +69,7 @@ Partial Class Form1
         '
         'MenuPrincipal
         '
-        Me.MenuPrincipal.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.MenuArchivo, Me.MenuEditar, Me.MenuVer, Me.MenuOpciones, Me.MenuEstadisticas})
+        Me.MenuPrincipal.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.MenuArchivo, Me.MenuEditar, Me.MenuVer, Me.MenuOpciones, Me.MenuEstadisticas, Me.MenuAyuda})
         Me.MenuPrincipal.Location = New System.Drawing.Point(0, 0)
         Me.MenuPrincipal.Name = "MenuPrincipal"
         Me.MenuPrincipal.Size = New System.Drawing.Size(1200, 24)
@@ -213,6 +218,37 @@ Partial Class Form1
         Me.MenuReiniciarEstadisticas.Size = New System.Drawing.Size(200, 22)
         Me.MenuReiniciarEstadisticas.Text = "&Reiniciar Estadísticas"
         '
+        'MenuAyuda
+        '
+        Me.MenuAyuda.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.MenuComoUsar, Me.MenuAtajosTeclado, Me.SeparadorAyuda, Me.MenuAcercaDe})
+        Me.MenuAyuda.Name = "MenuAyuda"
+        Me.MenuAyuda.Size = New System.Drawing.Size(53, 20)
+        Me.MenuAyuda.Text = "A&yuda"
+        '
+        'MenuComoUsar
+        '
+        Me.MenuComoUsar.Name = "MenuComoUsar"
+        Me.MenuComoUsar.ShortcutKeys = System.Windows.Forms.Keys.F1
+        Me.MenuComoUsar.Size = New System.Drawing.Size(200, 22)
+        Me.MenuComoUsar.Text = "&Cómo Usar..."
+        '
+        'MenuAtajosTeclado
+        '
+        Me.MenuAtajosTeclado.Name = "MenuAtajosTeclado"
+        Me.MenuAtajosTeclado.Size = New System.Drawing.Size(200, 22)
+        Me.MenuAtajosTeclado.Text = "&Atajos de Teclado"
+        '
+        'SeparadorAyuda
+        '
+        Me.SeparadorAyuda.Name = "SeparadorAyuda"
+        Me.SeparadorAyuda.Size = New System.Drawing.Size(197, 6)
+        '
+        'MenuAcercaDe
+        '
+        Me.MenuAcercaDe.Name = "MenuAcercaDe"
+        Me.MenuAcercaDe.Size = New System.Drawing.Size(200, 22)
+        Me.MenuAcercaDe.Text = "&Acerca de..."
+        '
         'BarraEstado
         '
         Me.BarraEstado.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.LabelModo, Me.LabelPosicion})
@@ -256,7 +292,7 @@ Partial Class Form1
 
     End Sub
 
-    Friend WithEvents PanelPizarra As Panel
+    Friend WithEvents PanelPizarra As DoubleBufferedPanel
     Friend WithEvents MenuPrincipal As MenuStrip
     Friend WithEvents MenuArchivo As ToolStripMenuItem
     Friend WithEvents MenuAbrir As ToolStripMenuItem
@@ -280,6 +316,11 @@ Partial Class Form1
     Friend WithEvents MenuVerHistorial As ToolStripMenuItem
     Friend WithEvents SeparadorEstadisticas As ToolStripSeparator
     Friend WithEvents MenuReiniciarEstadisticas As ToolStripMenuItem
+    Friend WithEvents MenuAyuda As ToolStripMenuItem
+    Friend WithEvents MenuComoUsar As ToolStripMenuItem
+    Friend WithEvents MenuAtajosTeclado As ToolStripMenuItem
+    Friend WithEvents SeparadorAyuda As ToolStripSeparator
+    Friend WithEvents MenuAcercaDe As ToolStripMenuItem
     Friend WithEvents BarraEstado As StatusStrip
     Friend WithEvents LabelModo As ToolStripStatusLabel
     Friend WithEvents LabelPosicion As ToolStripStatusLabel
