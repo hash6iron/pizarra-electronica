@@ -522,7 +522,7 @@
     End Function
 
     Private Function ContieneOperadorMatematico(texto As String) As Boolean
-        Return texto.Contains("+"c) OrElse texto.Contains("-"c) OrElse 
+        Return texto.Contains("+"c) OrElse texto.Contains("-"c) OrElse
                texto.Contains("*"c) OrElse texto.Contains("/"c) OrElse
                texto.Contains("^"c) OrElse texto.Contains("x"c) OrElse texto.Contains("X"c)
     End Function
@@ -774,9 +774,9 @@
     End Sub
 
     Private Sub MenuReiniciarEstadisticas_Click(sender As Object, e As EventArgs) Handles MenuReiniciarEstadisticas.Click
-        Dim resultado = MessageBox.Show("¿Desea reiniciar todas las estadísticas y borrar el historial?", 
-                                       "Confirmar reinicio", 
-                                       MessageBoxButtons.YesNo, 
+        Dim resultado = MessageBox.Show("¿Desea reiniciar todas las estadísticas y borrar el historial?",
+                                       "Confirmar reinicio",
+                                       MessageBoxButtons.YesNo,
                                        MessageBoxIcon.Question)
 
         If resultado = DialogResult.Yes Then
@@ -843,7 +843,7 @@
 
         For y = 0 To FILAS - 1
             For x = 0 To COLUMNAS - 1
-                If colores(y, x) = Color.White OrElse colores(y, x) = Color.FromArgb(200, 220, 255) OrElse 
+                If colores(y, x) = Color.White OrElse colores(y, x) = Color.FromArgb(200, 220, 255) OrElse
                    colores(y, x) = Color.FromArgb(0, 255, 0) OrElse colores(y, x) = Color.FromArgb(255, 255, 180) Then
                     colores(y, x) = config.ColorTexto
                 End If
@@ -1346,7 +1346,7 @@
             ' Usamos DataTable.Compute con algunas sustituciones
 
             ' Primero intentar con DataTable para expresiones simples
-            If Not expresion.Contains("sin") AndAlso Not expresion.Contains("cos") AndAlso 
+            If Not expresion.Contains("sin") AndAlso Not expresion.Contains("cos") AndAlso
                Not expresion.Contains("tan") AndAlso Not expresion.Contains("sqrt") AndAlso
                Not expresion.Contains("^") Then
                 Dim tabla As New DataTable()
