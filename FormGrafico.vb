@@ -10,6 +10,8 @@ Public Class FormGrafico
     Private offsetY As Double = 0
     Private arrastrandoMouse As Boolean = False
     Private ultimoPuntoMouse As Point
+    Private puntosCache As List(Of PointF)
+    Private cacheValido As Boolean = False
 
     Public Sub New(ecuacionTexto As String, modoRadianes As Boolean)
         InitializeComponent()
@@ -27,6 +29,45 @@ Public Class FormGrafico
         Me.WindowState = FormWindowState.Normal
         Me.Size = New Size(800, 600)
         ActualizarEtiquetas()
+        CalcularPuntos()
+    End Sub
+
+    Private Sub CalcularPuntos()
+        puntosCache = New List(Of PointF)
+
+        ' Calcular rango visible con zoom y offset
+        Dim rangoX As Double = (maxX - minX) / zoom
+        Dim rangoY As Double = (maxY - minY) / zoom
+        Dim centroX As Double = (maxX + minX) / 2 + offsetX
+        Dim centroY As Double = (maxY + minY) / 2 + offsetY
+
+        Dim visibleMinX As Double = centroX - rangoX / 2
+        Dim visibleMaxX As Double = centroX + rangoX / 2
+        Dim visibleMinY As Double = centroY - rangoY / 2
+        Dim visibleMaxY As Double = centroY + rangoY / 2
+
+        ' Calcular puntos de la función (solo 500 puntos para rapidez)
+        Dim numPuntos As Integer = 500
+        Dim paso As Double = (visibleMaxX - visibleMinX) / numPuntos
+
+        For i As Integer = 0 To numPuntos
+            Dim x As Double = visibleMinX + i * paso
+            Try
+                Dim y As Double = EvaluarFuncionGrafica(ecuacion, x)
+
+                ' Verificar que y es válido
+                If Not Double.IsNaN(y) AndAlso Not Double.IsInfinity(y) Then
+                    ' Limitar Y al rango visible ampliado (para evitar puntos muy lejanos)
+                    If y >= visibleMinY - rangoY AndAlso y <= visibleMaxY + rangoY Then
+                        puntosCache.Add(New PointF(x, y))
+                    End If
+                End If
+            Catch ex As Exception
+                ' Ignorar errores de evaluación
+            End Try
+        Next
+
+        cacheValido = True
     End Sub
 
     Private Sub PanelGrafico_Paint(sender As Object, e As PaintEventArgs) Handles PanelGrafico.Paint
@@ -56,8 +97,8 @@ Public Class FormGrafico
         ' Dibujar ejes
         DibujarEjes(g, ancho, alto, visibleMinX, visibleMaxX, visibleMinY, visibleMaxY)
 
-        ' Dibujar la función
-        DibujarFuncion(g, ancho, alto, visibleMinX, visibleMaxX, visibleMinY, visibleMaxY)
+        ' Dibujar la función desde cache
+        DibujarFuncionDesdeCache(g, ancho, alto, visibleMinX, visibleMaxX, visibleMinY, visibleMaxY)
     End Sub
 
     Private Sub DibujarCuadricula(g As Graphics, ancho As Integer, alto As Integer,
@@ -70,7 +111,9 @@ Public Class FormGrafico
         Dim x As Double = Math.Ceiling(minX / pasoX) * pasoX
         While x <= maxX
             Dim screenX As Integer = ConvertirXAPantalla(x, ancho, minX, maxX)
-            g.DrawLine(penCuadricula, screenX, 0, screenX, alto)
+            If screenX >= 0 AndAlso screenX <= ancho Then
+                g.DrawLine(penCuadricula, screenX, 0, screenX, alto)
+            End If
             x += pasoX
         End While
 
@@ -79,7 +122,9 @@ Public Class FormGrafico
         Dim y As Double = Math.Ceiling(minY / pasoY) * pasoY
         While y <= maxY
             Dim screenY As Integer = ConvertirYAPantalla(y, alto, minY, maxY)
-            g.DrawLine(penCuadricula, 0, screenY, ancho, screenY)
+            If screenY >= 0 AndAlso screenY <= alto Then
+                g.DrawLine(penCuadricula, 0, screenY, ancho, screenY)
+            End If
             y += pasoY
         End While
 
@@ -103,8 +148,10 @@ Public Class FormGrafico
             While y <= maxY
                 If Math.Abs(y) > 0.001 Then
                     Dim screenY As Integer = ConvertirYAPantalla(y, alto, minY, maxY)
-                    g.DrawString(y.ToString("F1"), fuente, brocha, screenX + 5, screenY - 8)
-                    g.DrawLine(penEje, screenX - 3, screenY, screenX + 3, screenY)
+                    If screenY >= 0 AndAlso screenY <= alto Then
+                        g.DrawString(y.ToString("F1"), fuente, brocha, screenX + 5, screenY - 8)
+                        g.DrawLine(penEje, screenX - 3, screenY, screenX + 3, screenY)
+                    End If
                 End If
                 y += pasoY
             End While
@@ -121,8 +168,10 @@ Public Class FormGrafico
             While x <= maxX
                 If Math.Abs(x) > 0.001 Then
                     Dim screenX As Integer = ConvertirXAPantalla(x, ancho, minX, maxX)
-                    g.DrawString(x.ToString("F1"), fuente, brocha, screenX - 15, screenY + 5)
-                    g.DrawLine(penEje, screenX, screenY - 3, screenX, screenY + 3)
+                    If screenX >= 0 AndAlso screenX <= ancho Then
+                        g.DrawString(x.ToString("F1"), fuente, brocha, screenX - 15, screenY + 5)
+                        g.DrawLine(penEje, screenX, screenY - 3, screenX, screenY + 3)
+                    End If
                 End If
                 x += pasoX
             End While
@@ -133,53 +182,35 @@ Public Class FormGrafico
         brocha.Dispose()
     End Sub
 
-    Private Sub DibujarFuncion(g As Graphics, ancho As Integer, alto As Integer,
-                               minX As Double, maxX As Double, minY As Double, maxY As Double)
+    Private Sub DibujarFuncionDesdeCache(g As Graphics, ancho As Integer, alto As Integer,
+                                         minX As Double, maxX As Double, minY As Double, maxY As Double)
+        If Not cacheValido OrElse puntosCache Is Nothing OrElse puntosCache.Count = 0 Then
+            Return
+        End If
+
         Dim penFuncion As New Pen(Color.Blue, 2)
-        Dim puntos As New List(Of PointF)
+        Dim puntosScreen As New List(Of PointF)
 
-        ' Calcular puntos de la función
-        Dim paso As Double = (maxX - minX) / ancho
-        Dim x As Double = minX
+        For Each punto In puntosCache
+            Dim screenX As Integer = ConvertirXAPantalla(punto.X, ancho, minX, maxX)
+            Dim screenY As Integer = ConvertirYAPantalla(punto.Y, alto, minY, maxY)
 
-        While x <= maxX
-            Try
-                Dim y As Double = EvaluarFuncionGrafica(ecuacion, x)
-
-                ' Verificar que y está en rango visible
-                If Not Double.IsNaN(y) AndAlso Not Double.IsInfinity(y) Then
-                    If y >= minY AndAlso y <= maxY Then
-                        Dim screenX As Integer = ConvertirXAPantalla(x, ancho, minX, maxX)
-                        Dim screenY As Integer = ConvertirYAPantalla(y, alto, minY, maxY)
-                        puntos.Add(New PointF(screenX, screenY))
-                    ElseIf puntos.Count > 0 Then
-                        ' Discontinuidad - dibujar lo acumulado y reiniciar
-                        If puntos.Count > 1 Then
-                            g.DrawLines(penFuncion, puntos.ToArray())
-                        End If
-                        puntos.Clear()
-                    End If
-                ElseIf puntos.Count > 0 Then
-                    ' Discontinuidad - dibujar lo acumulado y reiniciar
-                    If puntos.Count > 1 Then
-                        g.DrawLines(penFuncion, puntos.ToArray())
-                    End If
-                    puntos.Clear()
+            ' Solo agregar puntos dentro de los límites visibles
+            If screenX >= -10 AndAlso screenX <= ancho + 10 AndAlso
+               screenY >= -10 AndAlso screenY <= alto + 10 Then
+                puntosScreen.Add(New PointF(screenX, screenY))
+            ElseIf puntosScreen.Count > 0 Then
+                ' Discontinuidad - dibujar lo acumulado
+                If puntosScreen.Count > 1 Then
+                    g.DrawLines(penFuncion, puntosScreen.ToArray())
                 End If
-            Catch ex As Exception
-                ' Error al evaluar - discontinuidad
-                If puntos.Count > 1 Then
-                    g.DrawLines(penFuncion, puntos.ToArray())
-                End If
-                puntos.Clear()
-            End Try
-
-            x += paso
-        End While
+                puntosScreen.Clear()
+            End If
+        Next
 
         ' Dibujar los puntos restantes
-        If puntos.Count > 1 Then
-            g.DrawLines(penFuncion, puntos.ToArray())
+        If puntosScreen.Count > 1 Then
+            g.DrawLines(penFuncion, puntosScreen.ToArray())
         End If
 
         penFuncion.Dispose()
@@ -187,8 +218,11 @@ Public Class FormGrafico
 
     Private Function EvaluarFuncionGrafica(expresion As String, valorX As Double) As Double
         ' Reemplazar x por el valor
-        Dim expresionEvaluable As String = expresion.ToLower()
-        expresionEvaluable = expresionEvaluable.Replace("x", valorX.ToString(System.Globalization.CultureInfo.InvariantCulture))
+        Dim expresionEvaluable As String = expresion.ToLower().Trim()
+
+        ' Reemplazar x (asegurándose de no reemplazar dentro de "exp")
+        expresionEvaluable = System.Text.RegularExpressions.Regex.Replace(expresionEvaluable, "\bx\b", 
+                            valorX.ToString(System.Globalization.CultureInfo.InvariantCulture))
 
         ' Expandir notación implícita
         expresionEvaluable = ExpandirNotacion(expresionEvaluable)
@@ -205,7 +239,7 @@ Public Class FormGrafico
     Private Function ExpandirNotacion(expresion As String) As String
         Dim resultado As String = expresion
 
-        ' Números seguidos de paréntesis: 2(x) -> 2*(x)
+        ' Números seguidos de paréntesis: 2( -> 2*(
         resultado = System.Text.RegularExpressions.Regex.Replace(resultado, "(\d)\(", "$1*(")
 
         ' Paréntesis seguidos de paréntesis: )( -> )*(
@@ -216,70 +250,96 @@ Public Class FormGrafico
 
     Private Function ProcesarFunciones(expresion As String) As String
         Dim resultado As String = expresion
+        Dim maxIteraciones As Integer = 100
+        Dim iteracion As Integer = 0
 
-        ' Procesar funciones matemáticas
-        While resultado.Contains("log(")
-            Dim pos As Integer = resultado.IndexOf("log(")
-            Dim argumento As String = ExtraerArgumento(resultado, pos + 4)
-            Dim valorArg As Double = EvaluarExpresionSimple(argumento)
-            Dim valorLog As Double = Math.Log10(valorArg)
-            resultado = resultado.Replace("log(" & argumento & ")", valorLog.ToString(System.Globalization.CultureInfo.InvariantCulture))
-        End While
+        ' Procesar funciones de forma más eficiente
+        While (resultado.Contains("log(") OrElse resultado.Contains("ln(") OrElse 
+               resultado.Contains("exp(") OrElse resultado.Contains("abs(") OrElse
+               resultado.Contains("sin(") OrElse resultado.Contains("cos(") OrElse
+               resultado.Contains("tan(") OrElse resultado.Contains("sqrt(")) AndAlso iteracion < maxIteraciones
 
-        While resultado.Contains("ln(")
-            Dim pos As Integer = resultado.IndexOf("ln(")
-            Dim argumento As String = ExtraerArgumento(resultado, pos + 3)
-            Dim valorArg As Double = EvaluarExpresionSimple(argumento)
-            Dim valorLn As Double = Math.Log(valorArg)
-            resultado = resultado.Replace("ln(" & argumento & ")", valorLn.ToString(System.Globalization.CultureInfo.InvariantCulture))
-        End While
+            iteracion += 1
 
-        While resultado.Contains("exp(")
-            Dim pos As Integer = resultado.IndexOf("exp(")
-            Dim argumento As String = ExtraerArgumento(resultado, pos + 4)
-            Dim valorArg As Double = EvaluarExpresionSimple(argumento)
-            Dim valorExp As Double = Math.Exp(valorArg)
-            resultado = resultado.Replace("exp(" & argumento & ")", valorExp.ToString(System.Globalization.CultureInfo.InvariantCulture))
-        End While
+            ' log(x)
+            If resultado.Contains("log(") Then
+                Dim pos As Integer = resultado.IndexOf("log(")
+                Dim argumento As String = ExtraerArgumento(resultado, pos + 4)
+                Dim valorArg As Double = EvaluarExpresionSimple(argumento)
+                Dim valorLog As Double = Math.Log10(valorArg)
+                resultado = resultado.Replace("log(" & argumento & ")", valorLog.ToString(System.Globalization.CultureInfo.InvariantCulture))
+                Continue While
+            End If
 
-        While resultado.Contains("abs(")
-            Dim pos As Integer = resultado.IndexOf("abs(")
-            Dim argumento As String = ExtraerArgumento(resultado, pos + 4)
-            Dim valorArg As Double = EvaluarExpresionSimple(argumento)
-            Dim valorAbs As Double = Math.Abs(valorArg)
-            resultado = resultado.Replace("abs(" & argumento & ")", valorAbs.ToString(System.Globalization.CultureInfo.InvariantCulture))
-        End While
+            ' ln(x)
+            If resultado.Contains("ln(") Then
+                Dim pos As Integer = resultado.IndexOf("ln(")
+                Dim argumento As String = ExtraerArgumento(resultado, pos + 3)
+                Dim valorArg As Double = EvaluarExpresionSimple(argumento)
+                Dim valorLn As Double = Math.Log(valorArg)
+                resultado = resultado.Replace("ln(" & argumento & ")", valorLn.ToString(System.Globalization.CultureInfo.InvariantCulture))
+                Continue While
+            End If
 
-        While resultado.Contains("sin(")
-            Dim pos As Integer = resultado.IndexOf("sin(")
-            Dim argumento As String = ExtraerArgumento(resultado, pos + 4)
-            Dim valorArg As Double = EvaluarExpresionSimple(argumento)
-            Dim valorSin As Double = If(usarRadianes, Math.Sin(valorArg), Math.Sin(valorArg * Math.PI / 180))
-            resultado = resultado.Replace("sin(" & argumento & ")", valorSin.ToString(System.Globalization.CultureInfo.InvariantCulture))
-        End While
+            ' exp(x)
+            If resultado.Contains("exp(") Then
+                Dim pos As Integer = resultado.IndexOf("exp(")
+                Dim argumento As String = ExtraerArgumento(resultado, pos + 4)
+                Dim valorArg As Double = EvaluarExpresionSimple(argumento)
+                Dim valorExp As Double = Math.Exp(valorArg)
+                resultado = resultado.Replace("exp(" & argumento & ")", valorExp.ToString(System.Globalization.CultureInfo.InvariantCulture))
+                Continue While
+            End If
 
-        While resultado.Contains("cos(")
-            Dim pos As Integer = resultado.IndexOf("cos(")
-            Dim argumento As String = ExtraerArgumento(resultado, pos + 4)
-            Dim valorArg As Double = EvaluarExpresionSimple(argumento)
-            Dim valorCos As Double = If(usarRadianes, Math.Cos(valorArg), Math.Cos(valorArg * Math.PI / 180))
-            resultado = resultado.Replace("cos(" & argumento & ")", valorCos.ToString(System.Globalization.CultureInfo.InvariantCulture))
-        End While
+            ' abs(x)
+            If resultado.Contains("abs(") Then
+                Dim pos As Integer = resultado.IndexOf("abs(")
+                Dim argumento As String = ExtraerArgumento(resultado, pos + 4)
+                Dim valorArg As Double = EvaluarExpresionSimple(argumento)
+                Dim valorAbs As Double = Math.Abs(valorArg)
+                resultado = resultado.Replace("abs(" & argumento & ")", valorAbs.ToString(System.Globalization.CultureInfo.InvariantCulture))
+                Continue While
+            End If
 
-        While resultado.Contains("tan(")
-            Dim pos As Integer = resultado.IndexOf("tan(")
-            Dim argumento As String = ExtraerArgumento(resultado, pos + 4)
-            Dim valorArg As Double = EvaluarExpresionSimple(argumento)
-            Dim valorTan As Double = If(usarRadianes, Math.Tan(valorArg), Math.Tan(valorArg * Math.PI / 180))
-            resultado = resultado.Replace("tan(" & argumento & ")", valorTan.ToString(System.Globalization.CultureInfo.InvariantCulture))
-        End While
+            ' sin(x)
+            If resultado.Contains("sin(") Then
+                Dim pos As Integer = resultado.IndexOf("sin(")
+                Dim argumento As String = ExtraerArgumento(resultado, pos + 4)
+                Dim valorArg As Double = EvaluarExpresionSimple(argumento)
+                Dim valorSin As Double = If(usarRadianes, Math.Sin(valorArg), Math.Sin(valorArg * Math.PI / 180))
+                resultado = resultado.Replace("sin(" & argumento & ")", valorSin.ToString(System.Globalization.CultureInfo.InvariantCulture))
+                Continue While
+            End If
 
-        While resultado.Contains("sqrt(")
-            Dim pos As Integer = resultado.IndexOf("sqrt(")
-            Dim argumento As String = ExtraerArgumento(resultado, pos + 5)
-            Dim valorArg As Double = EvaluarExpresionSimple(argumento)
-            Dim valorSqrt As Double = Math.Sqrt(valorArg)
-            resultado = resultado.Replace("sqrt(" & argumento & ")", valorSqrt.ToString(System.Globalization.CultureInfo.InvariantCulture))
+            ' cos(x)
+            If resultado.Contains("cos(") Then
+                Dim pos As Integer = resultado.IndexOf("cos(")
+                Dim argumento As String = ExtraerArgumento(resultado, pos + 4)
+                Dim valorArg As Double = EvaluarExpresionSimple(argumento)
+                Dim valorCos As Double = If(usarRadianes, Math.Cos(valorArg), Math.Cos(valorArg * Math.PI / 180))
+                resultado = resultado.Replace("cos(" & argumento & ")", valorCos.ToString(System.Globalization.CultureInfo.InvariantCulture))
+                Continue While
+            End If
+
+            ' tan(x)
+            If resultado.Contains("tan(") Then
+                Dim pos As Integer = resultado.IndexOf("tan(")
+                Dim argumento As String = ExtraerArgumento(resultado, pos + 4)
+                Dim valorArg As Double = EvaluarExpresionSimple(argumento)
+                Dim valorTan As Double = If(usarRadianes, Math.Tan(valorArg), Math.Tan(valorArg * Math.PI / 180))
+                resultado = resultado.Replace("tan(" & argumento & ")", valorTan.ToString(System.Globalization.CultureInfo.InvariantCulture))
+                Continue While
+            End If
+
+            ' sqrt(x)
+            If resultado.Contains("sqrt(") Then
+                Dim pos As Integer = resultado.IndexOf("sqrt(")
+                Dim argumento As String = ExtraerArgumento(resultado, pos + 5)
+                Dim valorArg As Double = EvaluarExpresionSimple(argumento)
+                Dim valorSqrt As Double = Math.Sqrt(valorArg)
+                resultado = resultado.Replace("sqrt(" & argumento & ")", valorSqrt.ToString(System.Globalization.CultureInfo.InvariantCulture))
+                Continue While
+            End If
         End While
 
         Return resultado
@@ -345,6 +405,8 @@ Public Class FormGrafico
 
         zoom = Math.Max(0.1, Math.Min(zoom, 100))
         ActualizarEtiquetas()
+        cacheValido = False
+        CalcularPuntos()
         PanelGrafico.Invalidate()
     End Sub
 
@@ -369,6 +431,8 @@ Public Class FormGrafico
 
             ultimoPuntoMouse = e.Location
             ActualizarEtiquetas()
+            cacheValido = False
+            CalcularPuntos()
             PanelGrafico.Invalidate()
         End If
     End Sub
@@ -381,6 +445,8 @@ Public Class FormGrafico
     Private Sub BtnZoomIn_Click(sender As Object, e As EventArgs) Handles BtnZoomIn.Click
         zoom *= 1.5
         ActualizarEtiquetas()
+        cacheValido = False
+        CalcularPuntos()
         PanelGrafico.Invalidate()
     End Sub
 
@@ -388,6 +454,8 @@ Public Class FormGrafico
         zoom /= 1.5
         zoom = Math.Max(0.1, zoom)
         ActualizarEtiquetas()
+        cacheValido = False
+        CalcularPuntos()
         PanelGrafico.Invalidate()
     End Sub
 
@@ -396,6 +464,8 @@ Public Class FormGrafico
         offsetX = 0
         offsetY = 0
         ActualizarEtiquetas()
+        cacheValido = False
+        CalcularPuntos()
         PanelGrafico.Invalidate()
     End Sub
 
