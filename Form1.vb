@@ -1155,6 +1155,15 @@
         End If
     End Sub
 
+    Private Sub MenuHorasReloj_Click(sender As Object, e As EventArgs) Handles MenuHorasReloj.Click
+        Try
+            Dim formHoras As New FormHorasReloj()
+            formHoras.ShowDialog()
+        Catch ex As Exception
+            MessageBox.Show("Error al abrir la ventana de aprendizaje: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
+
     Private Sub CambiarTema(tema As TemaColor)
         temaActual = tema
 

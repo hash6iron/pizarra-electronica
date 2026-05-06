@@ -41,6 +41,8 @@ Partial Class Form1
         Me.MenuTemaOscuroAzul = New System.Windows.Forms.ToolStripMenuItem()
         Me.MenuTemaMatriz = New System.Windows.Forms.ToolStripMenuItem()
         Me.MenuTemaRetro = New System.Windows.Forms.ToolStripMenuItem()
+        Me.MenuAprender = New System.Windows.Forms.ToolStripMenuItem()
+        Me.MenuHorasReloj = New System.Windows.Forms.ToolStripMenuItem()
         Me.MenuEstadisticas = New System.Windows.Forms.ToolStripMenuItem()
         Me.MenuVerEstadisticas = New System.Windows.Forms.ToolStripMenuItem()
         Me.MenuVerHistorial = New System.Windows.Forms.ToolStripMenuItem()
@@ -69,7 +71,7 @@ Partial Class Form1
         '
         'MenuPrincipal
         '
-        Me.MenuPrincipal.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.MenuArchivo, Me.MenuEditar, Me.MenuVer, Me.MenuOpciones, Me.MenuEstadisticas, Me.MenuAyuda})
+        Me.MenuPrincipal.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.MenuArchivo, Me.MenuEditar, Me.MenuVer, Me.MenuOpciones, Me.MenuAprender, Me.MenuEstadisticas, Me.MenuAyuda})
         Me.MenuPrincipal.Location = New System.Drawing.Point(0, 0)
         Me.MenuPrincipal.Name = "MenuPrincipal"
         Me.MenuPrincipal.Size = New System.Drawing.Size(1200, 24)
@@ -187,6 +189,19 @@ Partial Class Form1
         Me.MenuTemaRetro.Name = "MenuTemaRetro"
         Me.MenuTemaRetro.Size = New System.Drawing.Size(200, 22)
         Me.MenuTemaRetro.Text = "&Retro"
+        '
+        'MenuAprender
+        '
+        Me.MenuAprender.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.MenuHorasReloj})
+        Me.MenuAprender.Name = "MenuAprender"
+        Me.MenuAprender.Size = New System.Drawing.Size(69, 20)
+        Me.MenuAprender.Text = "A&prender"
+        '
+        'MenuHorasReloj
+        '
+        Me.MenuHorasReloj.Name = "MenuHorasReloj"
+        Me.MenuHorasReloj.Size = New System.Drawing.Size(200, 22)
+        Me.MenuHorasReloj.Text = "&Horas del Reloj..."
         '
         'MenuEstadisticas
         '
@@ -311,6 +326,8 @@ Partial Class Form1
     Friend WithEvents MenuTemaOscuroAzul As ToolStripMenuItem
     Friend WithEvents MenuTemaMatriz As ToolStripMenuItem
     Friend WithEvents MenuTemaRetro As ToolStripMenuItem
+    Friend WithEvents MenuAprender As ToolStripMenuItem
+    Friend WithEvents MenuHorasReloj As ToolStripMenuItem
     Friend WithEvents MenuEstadisticas As ToolStripMenuItem
     Friend WithEvents MenuVerEstadisticas As ToolStripMenuItem
     Friend WithEvents MenuVerHistorial As ToolStripMenuItem
