@@ -48,6 +48,38 @@ Una aplicación de escritorio tipo pizarra electrónica diseñada para que los n
 - Suma, resta, multiplicación, división: `2+2=4`, `10/2=5`
 - Con formato: `1) 2+2=4`, `a) 15*3=45`
 
+#### Operaciones en Formato Vertical
+La pizarra ahora soporta operaciones en formato de columna (verticales), ideal para enseñar el método tradicional:
+
+```
+  37
+-15
+-----
+ RRR
+```
+
+**Cómo usarlo:**
+1. En **Modo EDICIÓN**, escribe la operación vertical:
+   - Primera línea: número superior (ej: `37`)
+   - Segunda línea: operador y número inferior (ej: `-15`)
+   - Tercera línea: línea de guiones (ej: `-----`)
+   - Cuarta línea: campo de resultado con R (ej: `RRR`)
+2. Presiona **F2** para cambiar a modo COMPROBACIÓN
+3. Los campos R se convertirán en campos editables
+4. El niño escribe el resultado alineado a la derecha
+5. Al presionar INTRO, se valida automáticamente
+
+**Operaciones soportadas:**
+- Suma: `+37`
+- Resta: `-15`
+- Multiplicación: `*12`
+- División: `/5`
+
+**Notas:**
+- Los números deben estar alineados verticalmente
+- Se necesitan al menos 2 guiones consecutivos (`--`)
+- El resultado se valida cuando el cursor está en la línea de las R
+
 #### Operaciones Avanzadas
 - **Exponentes**: `2^3=8` (se visualiza como 2³)
 - **Constante PI**: `pi` o `PI` (se visualiza como π en modo NO EDICIÓN)
@@ -75,6 +107,50 @@ Una aplicación de escritorio tipo pizarra electrónica diseñada para que los n
 - ✅ **Verde**: Respuesta correcta
 - ❌ **Rojo**: Respuesta incorrecta (muestra `[respuesta_correcta]`)
 - **Blanco**: Sin validar
+
+### 🎲 Generador Automático de Ejercicios
+
+La pizarra incluye un potente generador de ejercicios que permite crear automáticamente hojas de práctica personalizadas.
+
+**Acceso**: Menú Editar > Generar Ejercicios... (o **CTRL+G**)
+
+**Opciones de configuración:**
+
+1. **Tipo de Operación**:
+   - Mezclado (suma, resta, multiplicación y división)
+   - Solo Suma
+   - Solo Resta
+   - Solo Multiplicación
+   - Solo División
+   - Suma y Resta
+   - Multiplicación y División
+
+2. **Número de Cifras**: 
+   - 1 cifra (números del 1 al 9)
+   - 2 cifras (números del 10 al 99)
+   - 3 cifras (números del 100 al 999)
+   - 4 cifras (números del 1000 al 9999)
+
+3. **Cantidad de Ejercicios**: De 1 a 50 ejercicios
+
+4. **Formato**:
+   - **Horizontal**: Operaciones en línea (ej: `1) 37+15=RRR`)
+   - **Vertical**: Operaciones en columna (formato tradicional)
+
+**Características inteligentes:**
+- En divisiones, genera solo divisiones exactas (sin decimales)
+- En restas, asegura que el resultado no sea negativo
+- Los ejercicios se numeran automáticamente
+- Genera campos de resultado (RRR) del tamaño adecuado
+- Limpia la pizarra antes de generar
+
+**Ejemplo de uso:**
+1. Ir a Editar > Generar Ejercicios
+2. Seleccionar "Solo Suma", "2 cifras", 10 ejercicios, formato "Vertical"
+3. Presionar "Generar Ejercicios"
+4. La pizarra se llenará automáticamente con 10 sumas de 2 cifras
+5. Presionar F2 para salir de modo edición
+6. Guardar con CTRL+S para usar más tarde
 
 ### 📊 Estadísticas y Progreso
 
@@ -181,13 +257,31 @@ git clone https://github.com/TU_USUARIO/pizarra-electronica.git
 
 1. Pulsa **F2** para activar modo EDICIÓN
 2. Escribe las operaciones:
+
+   **Operaciones horizontales:**
    ```
    Ejercicios de potencias
 
-   1) 2^2=
-   2) 3^2=
-   3) 2^2+3^2=
+   1) 2^2=RRRR
+   2) 3^2=RRRR
+   3) 2^2+3^2=RRRR
    ```
+
+   **Operaciones verticales:**
+   ```
+   Ejercicios de suma
+
+     37
+   +15
+   -----
+    RRR
+
+     45
+   -23
+   -----
+    RRR
+   ```
+
 3. Pulsa **F2** para desactivar modo EDICIÓN
 4. Guarda con **CTRL+S**
 
@@ -203,6 +297,7 @@ git clone https://github.com/TU_USUARIO/pizarra-electronica.git
 | Atajo | Función |
 |-------|---------|
 | **F2** | Alternar modo EDICIÓN/COMPROBACIÓN |
+| **CTRL+G** | Generar ejercicios automáticamente |
 | **CTRL+S** | Guardar |
 | **CTRL+O** | Abrir |
 | **CTRL+C/X/V** | Copiar/Cortar/Pegar |

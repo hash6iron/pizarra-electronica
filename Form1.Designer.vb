@@ -31,6 +31,7 @@ Partial Class Form1
         Me.SeparadorArchivo = New System.Windows.Forms.ToolStripSeparator()
         Me.MenuSalir = New System.Windows.Forms.ToolStripMenuItem()
         Me.MenuEditar = New System.Windows.Forms.ToolStripMenuItem()
+        Me.MenuGenerarEjercicios = New System.Windows.Forms.ToolStripMenuItem()
         Me.MenuVer = New System.Windows.Forms.ToolStripMenuItem()
         Me.MenuGraficar = New System.Windows.Forms.ToolStripMenuItem()
         Me.MenuOpciones = New System.Windows.Forms.ToolStripMenuItem()
@@ -120,9 +121,17 @@ Partial Class Form1
         'MenuEditar
         '
         Me.MenuEditar.CheckOnClick = True
+        Me.MenuEditar.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.MenuGenerarEjercicios})
         Me.MenuEditar.Name = "MenuEditar"
         Me.MenuEditar.Size = New System.Drawing.Size(49, 20)
         Me.MenuEditar.Text = "&Editar"
+        '
+        'MenuGenerarEjercicios
+        '
+        Me.MenuGenerarEjercicios.Name = "MenuGenerarEjercicios"
+        Me.MenuGenerarEjercicios.ShortcutKeys = CType((System.Windows.Forms.Keys.Control Or System.Windows.Forms.Keys.G), System.Windows.Forms.Keys)
+        Me.MenuGenerarEjercicios.Size = New System.Drawing.Size(250, 22)
+        Me.MenuGenerarEjercicios.Text = "&Generar Ejercicios..."
         '
         'MenuVer
         '
@@ -341,4 +350,5 @@ Partial Class Form1
     Friend WithEvents BarraEstado As StatusStrip
     Friend WithEvents LabelModo As ToolStripStatusLabel
     Friend WithEvents LabelPosicion As ToolStripStatusLabel
+    Friend WithEvents MenuGenerarEjercicios As ToolStripMenuItem
 End Class

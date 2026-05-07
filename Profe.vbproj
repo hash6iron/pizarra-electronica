@@ -83,6 +83,12 @@
       <DependentUpon>Form1.vb</DependentUpon>
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="FormGenerarEjercicios.Designer.vb">
+      <DependentUpon>FormGenerarEjercicios.vb</DependentUpon>
+    </Compile>
+    <Compile Include="FormGenerarEjercicios.vb">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="FormGrafico.Designer.vb">
       <DependentUpon>FormGrafico.vb</DependentUpon>
     </Compile>
@@ -122,6 +128,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
+    <None Include="ejemplo_operaciones_verticales.piz" />
     <None Include="INSTRUCCIONES_GITHUB.md" />
     <None Include="LICENSE" />
     <None Include="My Project\Application.myapp">
