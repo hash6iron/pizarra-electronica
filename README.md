@@ -138,19 +138,38 @@ La pizarra incluye un potente generador de ejercicios que permite crear automát
    - **Vertical**: Operaciones en columna (formato tradicional)
 
 **Características inteligentes:**
-- En divisiones, genera solo divisiones exactas (sin decimales)
-- En restas, asegura que el resultado no sea negativo
-- Los ejercicios se numeran automáticamente
-- Genera campos de resultado (RRR) del tamaño adecuado
-- Limpia la pizarra antes de generar
+- ✅ **Solo funciona en modo EDICIÓN** (presiona F2 primero)
+- ✅ **Genera desde la posición del cursor** - No borra el contenido existente
+- ✅ En divisiones, genera solo divisiones exactas (sin decimales)
+- ✅ En restas, asegura que el resultado no sea negativo
+- ✅ Los ejercicios se numeran automáticamente
+- ✅ Genera campos de resultado (RRR) del tamaño adecuado
+- ✅ **Formato horizontal**: Aprovecha el espacio en la misma línea
+- ✅ **Formato vertical**: Cada ejercicio en su propia columna
+- ✅ Avisa si no hay suficiente espacio y muestra cuántos generó
 
 **Ejemplo de uso:**
-1. Ir a Editar > Generar Ejercicios
-2. Seleccionar "Solo Suma", "2 cifras", 10 ejercicios, formato "Vertical"
-3. Presionar "Generar Ejercicios"
-4. La pizarra se llenará automáticamente con 10 sumas de 2 cifras
-5. Presionar F2 para salir de modo edición
-6. Guardar con CTRL+S para usar más tarde
+1. **Activar modo EDICIÓN** (F2)
+2. Colocar el cursor donde quieres empezar los ejercicios
+3. Ir a Editar > Generar Ejercicios (CTRL+G)
+4. Seleccionar "Solo Suma", "2 cifras", 10 ejercicios, formato "Vertical"
+5. Presionar "Generar Ejercicios"
+6. Los ejercicios se escribirán desde la posición del cursor
+7. Puedes seguir escribiendo más contenido manualmente
+8. Presionar F2 para salir de modo edición y probar los ejercicios
+9. Guardar con CTRL+S para usar más tarde
+
+**Flujo de trabajo recomendado:**
+```
+1. F2 (activar edición)
+2. Escribir título: "Ejercicios de Suma - 2 cifras"
+3. INTRO dos veces
+4. CTRL+G para generar ejercicios
+5. Seleccionar opciones y generar
+6. Escribir más contenido si es necesario
+7. F2 (desactivar edición)
+8. CTRL+S (guardar)
+```
 
 ### 📊 Estadísticas y Progreso
 
@@ -255,6 +274,8 @@ git clone https://github.com/TU_USUARIO/pizarra-electronica.git
 
 ### Para el Adulto (Preparar Ejercicios)
 
+**Opción 1: Escribir manualmente**
+
 1. Pulsa **F2** para activar modo EDICIÓN
 2. Escribe las operaciones:
 
@@ -284,6 +305,22 @@ git clone https://github.com/TU_USUARIO/pizarra-electronica.git
 
 3. Pulsa **F2** para desactivar modo EDICIÓN
 4. Guarda con **CTRL+S**
+
+**Opción 2: Generar automáticamente**
+
+1. Pulsa **F2** para activar modo EDICIÓN
+2. Escribe un título (opcional): "Ejercicios de suma"
+3. Presiona **INTRO** dos veces para dejar espacio
+4. Pulsa **CTRL+G** para abrir el generador
+5. Selecciona:
+   - Tipo de operación (Suma, Resta, Multiplicación, etc.)
+   - Número de cifras (1 a 4)
+   - Cantidad de ejercicios
+   - Formato (Horizontal o Vertical)
+6. Presiona "Generar Ejercicios"
+7. Los ejercicios se escriben desde donde está el cursor
+8. Pulsa **F2** para desactivar modo EDICIÓN
+9. Guarda con **CTRL+S**
 
 ### Para el Niño (Resolver Ejercicios)
 

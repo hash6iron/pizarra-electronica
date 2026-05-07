@@ -1714,15 +1714,22 @@
     End Sub
 
     Private Sub MenuGenerarEjercicios_Click(sender As Object, e As EventArgs) Handles MenuGenerarEjercicios.Click
+        ' Verificar que estamos en modo EDICIÓN
+        If Not MenuEditar.Checked Then
+            MessageBox.Show("Debe estar en modo EDICIÓN para generar ejercicios." & vbCrLf & vbCrLf &
+                          "Presione F2 para activar el modo EDICIÓN.",
+                          "Modo EDICIÓN requerido",
+                          MessageBoxButtons.OK,
+                          MessageBoxIcon.Information)
+            Return
+        End If
+
         ' Abrir formulario de configuración
         Dim formGenerar As New FormGenerarEjercicios()
         formGenerar.ShowDialog()
 
         If formGenerar.GenerarEjercicios Then
-            ' Limpiar la pizarra
-            InicializarPizarra()
-
-            ' Generar los ejercicios
+            ' Generar los ejercicios desde la posición actual del cursor
             GenerarEjerciciosAutomaticamente(
                 formGenerar.TipoOperacion,
                 formGenerar.NumeroCifras,
@@ -1731,24 +1738,34 @@
 
             ' Marcar como modificado
             pizarraModificada = True
-            archivoActual = ""
-            Me.Text = "Pizarra Electrónica - [Ejercicios generados]"
-
-            ' Poner en modo edición
-            MenuEditar.Checked = True
 
             ' Refrescar
             PanelPizarra.Invalidate()
+
+            MessageBox.Show($"Se han generado {formGenerar.CantidadEjercicios} ejercicio(s) desde la posición del cursor.",
+                          "Ejercicios generados",
+                          MessageBoxButtons.OK,
+                          MessageBoxIcon.Information)
         End If
     End Sub
 
     Private Sub GenerarEjerciciosAutomaticamente(tipoOperacion As String, numeroCifras As Integer, cantidad As Integer, formatoVertical As Boolean)
         Dim random As New Random()
-        Dim filaActual As Integer = 0
-        Dim columnaActual As Integer = 2
+        Dim filaActual As Integer = cursorY  ' Empezar desde la posición actual del cursor
+        Dim columnaActual As Integer = cursorX
+        Dim ejerciciosGenerados As Integer = 0
 
         For i = 1 To cantidad
-            If filaActual >= FILAS - 5 Then Exit For ' Evitar desbordar la pizarra
+            If filaActual >= FILAS - 5 Then
+                ' No hay suficiente espacio, avisar al usuario
+                If ejerciciosGenerados > 0 Then
+                    MessageBox.Show($"Se generaron solo {ejerciciosGenerados} ejercicios debido a falta de espacio en la pizarra.",
+                                  "Espacio insuficiente",
+                                  MessageBoxButtons.OK,
+                                  MessageBoxIcon.Warning)
+                End If
+                Exit For
+            End If
 
             ' Generar números aleatorios según el número de cifras
             Dim minimo As Integer = CInt(Math.Pow(10, numeroCifras - 1))
@@ -1780,16 +1797,69 @@
                 End If
             End If
 
-            ' Escribir el ejercicio
+            ' Verificar si hay espacio para el ejercicio
             If formatoVertical Then
+                ' Para verticales, siempre empezar en columna inicial (o columna del cursor si es el primero)
+                If i > 1 Then
+                    columnaActual = cursorX ' Volver a la columna inicial del cursor
+                End If
                 EscribirEjercicioVertical(filaActual, columnaActual, num1, num2, operador, i)
                 filaActual += 6 ' Espacio para el siguiente ejercicio
             Else
+                ' Para horizontales, verificar si cabe en la línea actual
+                Dim anchoEjercicio As Integer = EstimarAnchoEjercicio(num1, num2, operador, i)
+
+                If columnaActual + anchoEjercicio > COLUMNAS Then
+                    ' No cabe en esta línea, pasar a la siguiente
+                    filaActual += 1
+                    columnaActual = 0
+
+                    ' Verificar de nuevo si hay espacio
+                    If filaActual >= FILAS Then
+                        If ejerciciosGenerados > 0 Then
+                            MessageBox.Show($"Se generaron solo {ejerciciosGenerados} ejercicios debido a falta de espacio en la pizarra.",
+                                          "Espacio insuficiente",
+                                          MessageBoxButtons.OK,
+                                          MessageBoxIcon.Warning)
+                        End If
+                        Exit For
+                    End If
+                End If
+
                 EscribirEjercicioHorizontal(filaActual, columnaActual, num1, num2, operador, i)
-                filaActual += 2 ' Espacio para el siguiente ejercicio
+                columnaActual += anchoEjercicio + 3 ' Espacio para el siguiente ejercicio
+
+                ' Si la siguiente posición está muy cerca del borde, pasar a la siguiente línea
+                If columnaActual >= COLUMNAS - 10 Then
+                    filaActual += 1
+                    columnaActual = 0
+                End If
             End If
+
+            ejerciciosGenerados += 1
         Next
+
+        ' Posicionar el cursor después del último ejercicio generado
+        If formatoVertical Then
+            cursorY = Math.Min(filaActual, FILAS - 1)
+            cursorX = 0
+        Else
+            cursorY = Math.Min(filaActual, FILAS - 1)
+            cursorX = columnaActual
+        End If
     End Sub
+
+    Private Function EstimarAnchoEjercicio(num1 As Integer, num2 As Integer, operador As Char, numeroEjercicio As Integer) As Integer
+        ' Estimar: "N) num1+num2=RRR"
+        Dim ancho As Integer = 0
+        ancho += numeroEjercicio.ToString().Length + 2 ' "N) "
+        ancho += num1.ToString().Length ' num1
+        ancho += 1 ' operador
+        ancho += num2.ToString().Length ' num2
+        ancho += 1 ' "="
+        ancho += CalcularLongitudResultado(num1, num2, operador) ' RRR
+        Return ancho
+    End Function
 
     Private Function ObtenerOperadorAleatorio(tipoOperacion As String, random As Random) As Char
         Select Case tipoOperacion
