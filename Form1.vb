@@ -86,6 +86,16 @@
         timerCursor = New Timer()
         historialEjercicios = New List(Of EjercicioHistorial)
 
+        ' Cargar icono de la aplicación
+        Try
+            Dim iconPath As String = System.IO.Path.Combine(Application.StartupPath, "pizarra.ico")
+            If System.IO.File.Exists(iconPath) Then
+                Me.Icon = New Icon(iconPath)
+            End If
+        Catch ex As Exception
+            ' Si no se puede cargar el icono, continuar sin él
+        End Try
+
         Me.WindowState = FormWindowState.Maximized
 
         ' Iniciar en modo NO EDICIÓN con modo SOBREESCRIBIR activo
@@ -613,7 +623,7 @@
             Dim ladoDerecho As String = partesEcuacion(1).Trim()    ' 0
 
             ' Verificar que la respuesta sea x=numero
-            If Not (parteRespuesta.StartsWith("x=", StringComparison.OrdinalIgnoreCase) OrElse 
+            If Not (parteRespuesta.StartsWith("x=", StringComparison.OrdinalIgnoreCase) OrElse
                     parteRespuesta.StartsWith("x =", StringComparison.OrdinalIgnoreCase)) Then
                 Return
             End If
@@ -703,7 +713,7 @@
                 Dim parteRespuesta As String = lineaCompleta.Substring(posFlecha + 2).Trim()
 
                 ' Verificar si el usuario puso x=resultado
-                If parteRespuesta.StartsWith("x=", StringComparison.OrdinalIgnoreCase) OrElse 
+                If parteRespuesta.StartsWith("x=", StringComparison.OrdinalIgnoreCase) OrElse
                    parteRespuesta.StartsWith("x =", StringComparison.OrdinalIgnoreCase) Then
 
                     Dim resultadoUsuarioStr As String = parteRespuesta.Substring(parteRespuesta.IndexOf("=") + 1).Trim()
@@ -2608,7 +2618,7 @@
         Dim operador As Char = " "c
         Dim posOperador As Integer = -1
         For i = 0 To lineaOperador.Length - 1
-            If lineaOperador(i) = "+"c OrElse lineaOperador(i) = "-"c OrElse 
+            If lineaOperador(i) = "+"c OrElse lineaOperador(i) = "-"c OrElse
                lineaOperador(i) = "*"c OrElse lineaOperador(i) = "/"c Then
                 operador = lineaOperador(i)
                 posOperador = i
