@@ -985,15 +985,54 @@
     End Sub
 
     Private Function ExtraerOperacion(lineaTexto As String) As String
-        ' Dividir por espacios
-        Dim palabras() As String = lineaTexto.Split(" "c)
+        ' Estrategia: encontrar todas las operaciones y devolver la que contiene el cursor
+        Dim operacionesEncontradas As New List(Of Tuple(Of String, Integer, Integer))
 
-        ' Buscar la palabra que contenga = y operadores matemáticos
+        ' Dividir por espacios para obtener tokens
+        Dim palabras() As String = lineaTexto.Split(New Char() {" "c}, StringSplitOptions.None)
+        Dim posicionEnLinea As Integer = 0
+
+        ' Buscar todas las operaciones con sus posiciones
         For Each palabra In palabras
-            If palabra.Contains("="c) And ContieneOperadorMatematico(palabra) Then
-                Return palabra
+            If Not String.IsNullOrEmpty(palabra) Then
+                If palabra.Contains("="c) And ContieneOperadorMatematico(palabra) Then
+                    ' Encontrar la posición exacta de esta palabra en la línea original
+                    Dim indice As Integer = lineaTexto.IndexOf(palabra, posicionEnLinea)
+                    If indice >= 0 Then
+                        operacionesEncontradas.Add(New Tuple(Of String, Integer, Integer)(palabra, indice, indice + palabra.Length - 1))
+                        posicionEnLinea = indice + palabra.Length
+                    End If
+                Else
+                    ' Actualizar posición para seguir buscando
+                    Dim indice As Integer = lineaTexto.IndexOf(palabra, posicionEnLinea)
+                    If indice >= 0 Then
+                        posicionEnLinea = indice + palabra.Length
+                    End If
+                End If
+            Else
+                ' Espacio vacío, avanzar posición
+                posicionEnLinea += 1
             End If
         Next
+
+        ' Ahora buscar cuál operación contiene el cursor
+        For Each op In operacionesEncontradas
+            If cursorX >= op.Item2 AndAlso cursorX <= op.Item3 Then
+                Return op.Item1
+            End If
+        Next
+
+        ' Si el cursor no está exactamente sobre ninguna operación, devolver la más cercana a la izquierda
+        For i = operacionesEncontradas.Count - 1 To 0 Step -1
+            If cursorX >= operacionesEncontradas(i).Item2 Then
+                Return operacionesEncontradas(i).Item1
+            End If
+        Next
+
+        ' Si no se encontró ninguna cercana, devolver la primera si existe
+        If operacionesEncontradas.Count > 0 Then
+            Return operacionesEncontradas(0).Item1
+        End If
 
         Return ""
     End Function

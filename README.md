@@ -18,7 +18,8 @@ Una aplicación de escritorio tipo pizarra electrónica diseñada para que los n
 
 - **Modo COMPROBACIÓN**: El niño resuelve ejercicios
   - INTRO valida la respuesta automáticamente
-  - Navegación automática a la siguiente operación
+  - **Soporta múltiples operaciones en la misma línea** - Valida la operación donde está el cursor
+  - Navegación automática a la siguiente operación (incluso en la misma línea)
   - Superíndices elegantes para exponentes (2³ en vez de 2^3)
   - **Campos protegidos**: Solo se puede escribir en los campos de resultado (sombreados)
   - Las teclas de navegación saltan entre campos de resultado
