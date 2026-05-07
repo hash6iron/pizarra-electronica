@@ -12,6 +12,7 @@ Una aplicación de escritorio tipo pizarra electrónica diseñada para que los n
   - INTRO realiza retorno de carro
   - Auto-completado de `=` en operaciones
   - Saltos de línea inteligentes (SHIFT+INTRO = 1 línea, INTRO = 2 líneas)
+  - **INSERT alterna entre modo insertar/sobreescribir** (solo en modo EDICIÓN)
   - **Campos de resultado**: Define campos con `=RRRR` (tantas R como espacio necesites)
     - Ejemplo: `2+2=RRRR` crea un campo de 4 caracteres para la respuesta
 
@@ -21,6 +22,7 @@ Una aplicación de escritorio tipo pizarra electrónica diseñada para que los n
   - Superíndices elegantes para exponentes (2³ en vez de 2^3)
   - **Campos protegidos**: Solo se puede escribir en los campos de resultado (sombreados)
   - Las teclas de navegación saltan entre campos de resultado
+  - **Modo SOBREESCRIBIR siempre activo** - Los caracteres siempre se reemplazan, nunca se insertan
 
 
 ### ✨ Funcionalidades de Edición
@@ -37,7 +39,8 @@ Una aplicación de escritorio tipo pizarra electrónica diseñada para que los n
   - TAB/SHIFT+TAB con tab stops cada 4 columnas
 
 - **Edición avanzada**:
-  - INSERT alterna entre modo insertar/sobreescribir
+  - INSERT alterna entre modo insertar/sobreescribir (solo en modo EDICIÓN)
+  - En modo COMPROBACIÓN, siempre está activo el modo sobreescribir
   - Selección con SHIFT + cursores
   - Copiar (CTRL+C), Cortar (CTRL+X), Pegar (CTRL+V)
   - DELETE elimina y compacta texto
@@ -273,7 +276,8 @@ Formato `.piz` guarda:
 Muestra constantemente:
 - Posición del cursor (Línea, Columna)
 - Modo EDICIÓN (cuando está activo)
-- Modo SOBREESCRIBIR (cuando INSERT está activo)
+- Modo SOBREESCRIBIR (solo visible en modo EDICIÓN cuando INSERT está desactivado)
+  - En modo COMPROBACIÓN siempre está activo el modo sobreescribir (no se muestra en la barra)
 - **RAD** (cuando está en modo radianes)
 
 ## 🚀 Requisitos

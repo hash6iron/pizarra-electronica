@@ -88,6 +88,9 @@
 
         Me.WindowState = FormWindowState.Maximized
 
+        ' Iniciar en modo NO EDICIÓN con modo SOBREESCRIBIR activo
+        modoInsertar = False
+
         ' Calcular dimensiones basadas en el tamaño de la ventana
         CalcularDimensionesPizarra()
         InicializarPizarra()
@@ -410,8 +413,11 @@
                 e.Handled = True
 
             Case Keys.Insert
-                modoInsertar = Not modoInsertar
-                ActualizarBarraEstado()
+                ' Solo permitir cambiar modo en modo EDICIÓN
+                If MenuEditar.Checked Then
+                    modoInsertar = Not modoInsertar
+                    ActualizarBarraEstado()
+                End If
                 e.Handled = True
 
             Case Keys.C
@@ -438,13 +444,18 @@
                     ' Pasando de EDICIÓN a NO EDICIÓN: detectar campos
                     MenuEditar.Checked = False
                     DetectarCamposResultado()
+                    ' Activar modo SOBREESCRIBIR en modo NO EDICIÓN
+                    modoInsertar = False
                     ' Mover el cursor al primer campo de resultado
                     MoverCursorPrimerCampo()
                 Else
                     ' Pasando de NO EDICIÓN a EDICIÓN: restaurar las R
                     MenuEditar.Checked = True
                     RestaurarCamposResultado()
+                    ' Restaurar modo INSERTAR al volver a modo EDICIÓN
+                    modoInsertar = True
                 End If
+                ActualizarBarraEstado()
                 e.Handled = True
         End Select
 
