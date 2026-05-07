@@ -32,6 +32,7 @@ Partial Class Form1
         Me.MenuSalir = New System.Windows.Forms.ToolStripMenuItem()
         Me.MenuEditar = New System.Windows.Forms.ToolStripMenuItem()
         Me.MenuGenerarEjercicios = New System.Windows.Forms.ToolStripMenuItem()
+        Me.MenuBorrarPizarra = New System.Windows.Forms.ToolStripMenuItem()
         Me.MenuVer = New System.Windows.Forms.ToolStripMenuItem()
         Me.MenuGraficar = New System.Windows.Forms.ToolStripMenuItem()
         Me.MenuOpciones = New System.Windows.Forms.ToolStripMenuItem()
@@ -121,7 +122,7 @@ Partial Class Form1
         'MenuEditar
         '
         Me.MenuEditar.CheckOnClick = True
-        Me.MenuEditar.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.MenuGenerarEjercicios})
+        Me.MenuEditar.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.MenuGenerarEjercicios, Me.MenuBorrarPizarra})
         Me.MenuEditar.Name = "MenuEditar"
         Me.MenuEditar.Size = New System.Drawing.Size(49, 20)
         Me.MenuEditar.Text = "&Editar"
@@ -132,6 +133,13 @@ Partial Class Form1
         Me.MenuGenerarEjercicios.ShortcutKeys = CType((System.Windows.Forms.Keys.Control Or System.Windows.Forms.Keys.G), System.Windows.Forms.Keys)
         Me.MenuGenerarEjercicios.Size = New System.Drawing.Size(250, 22)
         Me.MenuGenerarEjercicios.Text = "&Generar Ejercicios..."
+        '
+        'MenuBorrarPizarra
+        '
+        Me.MenuBorrarPizarra.Name = "MenuBorrarPizarra"
+        Me.MenuBorrarPizarra.ShortcutKeys = System.Windows.Forms.Keys.F8
+        Me.MenuBorrarPizarra.Size = New System.Drawing.Size(250, 22)
+        Me.MenuBorrarPizarra.Text = "&Borrar Pizarra"
         '
         'MenuVer
         '
@@ -351,4 +359,5 @@ Partial Class Form1
     Friend WithEvents LabelModo As ToolStripStatusLabel
     Friend WithEvents LabelPosicion As ToolStripStatusLabel
     Friend WithEvents MenuGenerarEjercicios As ToolStripMenuItem
+    Friend WithEvents MenuBorrarPizarra As ToolStripMenuItem
 End Class

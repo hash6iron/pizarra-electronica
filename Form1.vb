@@ -1749,6 +1749,77 @@
         End If
     End Sub
 
+    Private Sub MenuBorrarPizarra_Click(sender As Object, e As EventArgs) Handles MenuBorrarPizarra.Click
+        ' Verificar que estamos en modo EDICIÓN
+        If Not MenuEditar.Checked Then
+            MessageBox.Show("Debe estar en modo EDICIÓN para borrar la pizarra." & vbCrLf & vbCrLf &
+                          "Presione F2 para activar el modo EDICIÓN.",
+                          "Modo EDICIÓN requerido",
+                          MessageBoxButtons.OK,
+                          MessageBoxIcon.Information)
+            Return
+        End If
+
+        ' Si la pizarra ha sido modificada y no se ha guardado, preguntar si desea guardar
+        If pizarraModificada Then
+            Dim resultado As DialogResult = MessageBox.Show(
+                "La pizarra tiene cambios sin guardar." & vbCrLf & vbCrLf &
+                "¿Desea guardar antes de borrar?",
+                "Guardar cambios",
+                MessageBoxButtons.YesNoCancel,
+                MessageBoxIcon.Question)
+
+            Select Case resultado
+                Case DialogResult.Yes
+                    ' Guardar antes de borrar
+                    If String.IsNullOrEmpty(archivoActual) Then
+                        MenuGuardarComo_Click(sender, e)
+                    Else
+                        GuardarArchivo(archivoActual)
+                    End If
+                    ' Si canceló el guardar, no borrar
+                    If pizarraModificada Then Return
+
+                Case DialogResult.Cancel
+                    ' Cancelar la operación de borrado
+                    Return
+
+                Case DialogResult.No
+                    ' Continuar sin guardar
+            End Select
+        End If
+
+        ' Confirmar el borrado
+        Dim confirmar As DialogResult = MessageBox.Show(
+            "¿Está seguro de que desea borrar todo el contenido de la pizarra?",
+            "Confirmar borrado",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Warning)
+
+        If confirmar = DialogResult.Yes Then
+            ' Borrar la pizarra
+            InicializarPizarra()
+
+            ' Resetear variables
+            archivoActual = ""
+            pizarraModificada = False
+            Me.Text = "Pizarra Electrónica - Práctica de Cálculos"
+
+            ' Colocar cursor al inicio
+            cursorX = 0
+            cursorY = 0
+
+            ' Refrescar
+            PanelPizarra.Invalidate()
+            ActualizarBarraEstado()
+
+            MessageBox.Show("La pizarra ha sido borrada.",
+                          "Pizarra borrada",
+                          MessageBoxButtons.OK,
+                          MessageBoxIcon.Information)
+        End If
+    End Sub
+
     Private Sub GenerarEjerciciosAutomaticamente(tipoOperacion As String, numeroCifras As Integer, cantidad As Integer, formatoVertical As Boolean)
         Dim random As New Random()
         Dim filaActual As Integer = cursorY  ' Empezar desde la posición actual del cursor

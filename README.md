@@ -171,6 +171,28 @@ La pizarra incluye un potente generador de ejercicios que permite crear automát
 8. CTRL+S (guardar)
 ```
 
+### 🗑️ Borrar Pizarra
+
+La aplicación incluye una función segura para borrar todo el contenido de la pizarra.
+
+**Acceso**: Menú Editar > Borrar Pizarra (o **F8**)
+
+**Características de seguridad:**
+- ✅ **Solo funciona en modo EDICIÓN** - Debes presionar F2 primero
+- ✅ **Pregunta si guardar** - Si hay cambios sin guardar, te da la opción de guardar antes de borrar
+- ✅ **Confirmación final** - Pide confirmación antes de borrar todo el contenido
+- ✅ **Resetea todo** - Borra contenido, resetea el nombre del archivo y coloca el cursor al inicio
+
+**Flujo de trabajo:**
+1. Presiona **F2** para activar modo EDICIÓN
+2. Presiona **F8** (o Editar > Borrar Pizarra)
+3. Si hay cambios sin guardar:
+   - Sí: Guarda el archivo antes de borrar
+   - No: Borra sin guardar
+   - Cancelar: Cancela la operación
+4. Confirma el borrado
+5. La pizarra queda limpia y lista para empezar de nuevo
+
 ### 📊 Estadísticas y Progreso
 
 - **Historial de Ejercicios**: Guarda todos los ejercicios completados con fecha/hora
@@ -335,6 +357,7 @@ git clone https://github.com/TU_USUARIO/pizarra-electronica.git
 |-------|---------|
 | **F2** | Alternar modo EDICIÓN/COMPROBACIÓN |
 | **CTRL+G** | Generar ejercicios automáticamente |
+| **F8** | Borrar pizarra (solo en modo EDICIÓN) |
 | **CTRL+S** | Guardar |
 | **CTRL+O** | Abrir |
 | **CTRL+C/X/V** | Copiar/Cortar/Pegar |
