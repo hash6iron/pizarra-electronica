@@ -808,43 +808,65 @@
         ' Línea Y-3: número1
         ' Línea Y-2: operador + número2
         ' Línea Y-1: -----
-        ' Línea Y:   RRRR (resultado, línea actual)
+        ' Línea Y:   resultado (línea actual)
 
         If cursorY < 3 Then Return False
 
         ' Buscar si hay una operación vertical que termine en la línea actual
+        ' Verificar si hay campos de resultado en la línea actual
+        Dim hayCamposResultado As Boolean = False
         For x = 0 To COLUMNAS - 1
             If esCampoResultado(cursorY, x) Then
-                ' Intentar obtener la información de la operación vertical
-                Dim info = ObtenerInfoOperacionVertical(cursorY - 3, x)
-                If info IsNot Nothing Then
-                    ' Extraer el resultado ingresado por el usuario
-                    Dim resultadoUsuario As String = ExtraerResultadoVertical(cursorY, info.ColumnaInicio, info.LongitudResultado)
-                    If Not String.IsNullOrEmpty(resultadoUsuario) Then
-                        ' Calcular el resultado correcto
-                        Dim resultadoCorrecto As Integer = CalcularOperacionVertical(info.Numero1, info.Numero2, info.Operador)
+                hayCamposResultado = True
+                Exit For
+            End If
+        Next
 
-                        ' Comparar resultados
-                        Dim resultadoUsuarioNum As Integer
-                        If Integer.TryParse(resultadoUsuario, resultadoUsuarioNum) Then
-                            Dim correcto As Boolean = (resultadoCorrecto = resultadoUsuarioNum)
-                            Dim config = ObtenerTema(temaActual)
+        If Not hayCamposResultado Then Return False
 
-                            If correcto Then
-                                ColorearResultadoVertical(cursorY, info.ColumnaInicio, info.LongitudResultado, config.ColorCorrecto)
-                                ejerciciosCorrectos += 1
-                            Else
-                                ColorearResultadoVertical(cursorY, info.ColumnaInicio, info.LongitudResultado, config.ColorIncorrecto)
-                                MostrarResultadoCorrectoVertical(cursorY, info.ColumnaInicio + info.LongitudResultado + 1, resultadoCorrecto)
-                                ejerciciosIncorrectos += 1
-                            End If
+        ' Buscar operación vertical que corresponda a esta línea
+        ' Verificar si 3 líneas arriba hay guiones
+        Dim hayGuiones As Boolean = False
+        For x = 0 To COLUMNAS - 1
+            If pizarra(cursorY - 1, x) = "-"c Then
+                hayGuiones = True
+                Exit For
+            End If
+        Next
 
-                            ejerciciosTotales += 1
-                            Dim expresion As String = $"{info.Numero1} {info.Operador} {info.Numero2}"
-                            historialEjercicios.Add(New EjercicioHistorial(expresion, resultadoUsuario, resultadoCorrecto.ToString(), correcto))
+        If Not hayGuiones Then Return False
 
-                            Return True
+        ' Intentar obtener la información de la operación vertical
+        ' Buscar desde diferentes posiciones de columna
+        For xBuscar = 0 To COLUMNAS - 1
+            Dim info = ObtenerInfoOperacionVertical(cursorY - 3, xBuscar)
+            If info IsNot Nothing Then
+                ' Extraer el resultado ingresado por el usuario
+                Dim resultadoUsuario As String = ExtraerResultadoVertical(cursorY, info.ColumnaInicio, info.LongitudResultado)
+                If Not String.IsNullOrEmpty(resultadoUsuario) Then
+                    ' Calcular el resultado correcto
+                    Dim resultadoCorrecto As Integer = CalcularOperacionVertical(info.Numero1, info.Numero2, info.Operador)
+
+                    ' Comparar resultados
+                    Dim resultadoUsuarioNum As Integer
+                    If Integer.TryParse(resultadoUsuario, resultadoUsuarioNum) Then
+                        Dim correcto As Boolean = (resultadoCorrecto = resultadoUsuarioNum)
+                        Dim config = ObtenerTema(temaActual)
+
+                        If correcto Then
+                            ColorearResultadoVertical(cursorY, info.ColumnaInicio, info.LongitudResultado, config.ColorCorrecto)
+                            ejerciciosCorrectos += 1
+                        Else
+                            ColorearResultadoVertical(cursorY, info.ColumnaInicio, info.LongitudResultado, config.ColorIncorrecto)
+                            MostrarResultadoCorrectoVertical(cursorY, info.ColumnaInicio + 2, resultadoCorrecto)
+                            ejerciciosIncorrectos += 1
                         End If
+
+                        ejerciciosTotales += 1
+                        Dim expresion As String = $"{info.Numero1} {info.Operador} {info.Numero2}"
+                        historialEjercicios.Add(New EjercicioHistorial(expresion, resultadoUsuario, resultadoCorrecto.ToString(), correcto))
+
+                        Return True
                     End If
                 End If
             End If
@@ -875,27 +897,65 @@
 
     ' Función para extraer el resultado ingresado en una operación vertical
     Private Function ExtraerResultadoVertical(fila As Integer, columnaInicio As Integer, longitud As Integer) As String
-        Dim resultado As New System.Text.StringBuilder()
-        For i = columnaInicio - longitud + 1 To columnaInicio
-            If i >= 0 AndAlso i < COLUMNAS Then
-                Dim c As Char = pizarra(fila, i)
-                If c <> " "c Then
-                    resultado.Append(c)
-                End If
+        ' Buscar todos los dígitos en la línea de resultado
+        Dim lineaTexto As String = ""
+        For x = 0 To COLUMNAS - 1
+            lineaTexto &= pizarra(fila, x)
+        Next
+
+        ' Buscar números cerca de la columna esperada
+        For i = Math.Max(0, columnaInicio - longitud - 2) To Math.Min(COLUMNAS - 1, columnaInicio + 2)
+            If Char.IsDigit(lineaTexto(i)) Then
+                ' Encontrar el número completo
+                Dim inicio As Integer = i
+                While inicio > 0 AndAlso Char.IsDigit(lineaTexto(inicio - 1))
+                    inicio -= 1
+                End While
+
+                Dim fin As Integer = i
+                While fin < lineaTexto.Length - 1 AndAlso Char.IsDigit(lineaTexto(fin + 1))
+                    fin += 1
+                End While
+
+                Return lineaTexto.Substring(inicio, fin - inicio + 1)
             End If
         Next
-        Return resultado.ToString().Trim()
+
+        Return ""
     End Function
 
     ' Función para colorear el resultado de una operación vertical
     Private Sub ColorearResultadoVertical(fila As Integer, columnaInicio As Integer, longitud As Integer, color As Color)
-        For i = columnaInicio - longitud + 1 To columnaInicio
-            If i >= 0 AndAlso i < COLUMNAS Then
-                If pizarra(fila, i) <> " "c Then
-                    colores(fila, i) = color
-                End If
+        ' Buscar y colorear todos los dígitos en la línea de resultado
+        Dim lineaTexto As String = ""
+        For x = 0 To COLUMNAS - 1
+            lineaTexto &= pizarra(fila, x)
+        Next
+
+        ' Buscar números cerca de la columna esperada
+        For i = Math.Max(0, columnaInicio - longitud - 2) To Math.Min(COLUMNAS - 1, columnaInicio + 2)
+            If Char.IsDigit(lineaTexto(i)) Then
+                ' Encontrar el número completo y colorearlo
+                Dim inicio As Integer = i
+                While inicio > 0 AndAlso Char.IsDigit(lineaTexto(inicio - 1))
+                    inicio -= 1
+                End While
+
+                Dim fin As Integer = i
+                While fin < lineaTexto.Length - 1 AndAlso Char.IsDigit(lineaTexto(fin + 1))
+                    fin += 1
+                End While
+
+                ' Colorear todos los dígitos del número
+                For j = inicio To fin
+                    colores(fila, j) = color
+                Next
+
+                PanelPizarra.Invalidate()
+                Return
             End If
         Next
+
         PanelPizarra.Invalidate()
     End Sub
 
@@ -1835,7 +1895,7 @@
         ' Línea 4: RRR para el resultado
         Dim longitudResultado As Integer = CalcularLongitudResultado(num1, num2, operador)
         Dim posR As Integer = colInicio - longitudResultado + 1
-        For i = 0 To longitudResultado
+        For i = 0 To longitudResultado - 1
             If posR + i < COLUMNAS AndAlso fila + 4 < FILAS Then
                 pizarra(fila + 4, posR + i) = "R"c
                 colores(fila + 4, posR + i) = config.ColorTexto
@@ -2269,25 +2329,43 @@
 
     ' Función para detectar operaciones en formato vertical
     Private Sub DetectarOperacionesVerticales()
-        For y = 0 To FILAS - 3 ' Necesitamos al menos 4 líneas: num1, operador+num2, guiones, RRR
+        For y = 0 To FILAS - 4 ' Necesitamos al menos 4 líneas: num1, operador+num2, guiones, RRR
             ' Buscar líneas de guiones (indica operación vertical)
-            For x = 0 To COLUMNAS - 1
-                If EsLineaGuiones(y + 2, x) Then
-                    ' Verificar si hay operación vertical en esta posición
+            Dim x As Integer = 0
+            While x < COLUMNAS
+                If pizarra(y + 2, x) = "-"c Then
+                    ' Encontramos un guion, verificar si es parte de una operación vertical
                     Dim info = ObtenerInfoOperacionVertical(y, x)
                     If info IsNot Nothing Then
                         ' Marcar los RRR debajo de los guiones como campos de resultado
-                        For i = 0 To info.LongitudResultado - 1
-                            If info.ColumnaInicio + i < COLUMNAS AndAlso y + 3 < FILAS Then
-                                If pizarra(y + 3, info.ColumnaInicio + i) = "R"c OrElse pizarra(y + 3, info.ColumnaInicio + i) = "r"c Then
-                                    esCampoResultado(y + 3, info.ColumnaInicio + i) = True
-                                    pizarra(y + 3, info.ColumnaInicio + i) = " "c
-                                End If
+                        ' Los RRR deben estar alineados con los números (a la derecha)
+                        Dim filaResultado As Integer = y + 3
+
+                        ' Buscar las R en la línea de resultado cerca de la posición esperada
+                        For xBuscar = Math.Max(0, info.ColumnaInicio - info.LongitudResultado - 2) To Math.Min(COLUMNAS - 1, info.ColumnaInicio + 2)
+                            If filaResultado < FILAS AndAlso (pizarra(filaResultado, xBuscar) = "R"c OrElse pizarra(filaResultado, xBuscar) = "r"c) Then
+                                ' Encontramos una R, marcar toda la secuencia
+                                Dim xR As Integer = xBuscar
+                                While xR < COLUMNAS AndAlso (pizarra(filaResultado, xR) = "R"c OrElse pizarra(filaResultado, xR) = "r"c)
+                                    esCampoResultado(filaResultado, xR) = True
+                                    pizarra(filaResultado, xR) = " "c
+                                    xR += 1
+                                End While
+                                Exit For
                             End If
                         Next
+
+                        ' Saltar al final de los guiones
+                        While x < COLUMNAS AndAlso pizarra(y + 2, x) = "-"c
+                            x += 1
+                        End While
+                    Else
+                        x += 1
                     End If
+                Else
+                    x += 1
                 End If
-            Next
+            End While
         Next
     End Sub
 
@@ -2326,53 +2404,121 @@
         If filaInicio < 0 OrElse filaInicio >= FILAS - 3 Then Return Nothing
 
         ' Extraer primer número (línea filaInicio)
-        Dim num1Str As String = ExtraerNumeroVertical(filaInicio, columna)
-        If String.IsNullOrEmpty(num1Str) Then Return Nothing
+        Dim num1Info = ExtraerNumeroVerticalConPosicion(filaInicio, columna)
+        If num1Info Is Nothing Then Return Nothing
 
         ' Extraer operador y segundo número (línea filaInicio + 1)
         Dim lineaOperador As String = ""
         For x = 0 To COLUMNAS - 1
             lineaOperador &= pizarra(filaInicio + 1, x)
         Next
-        lineaOperador = lineaOperador.Trim()
 
+        ' Buscar operador en la línea
         Dim operador As Char = " "c
-        Dim num2Str As String = ""
-
-        ' Buscar operador al inicio de la línea
-        If lineaOperador.Length > 0 Then
-            Dim primerChar As Char = lineaOperador(0)
-            If primerChar = "+"c OrElse primerChar = "-"c OrElse primerChar = "*"c OrElse primerChar = "/"c Then
-                operador = primerChar
-                num2Str = ExtraerNumeroVertical(filaInicio + 1, columna)
+        Dim posOperador As Integer = -1
+        For i = 0 To lineaOperador.Length - 1
+            If lineaOperador(i) = "+"c OrElse lineaOperador(i) = "-"c OrElse 
+               lineaOperador(i) = "*"c OrElse lineaOperador(i) = "/"c Then
+                operador = lineaOperador(i)
+                posOperador = i
+                Exit For
             End If
-        End If
+        Next
 
-        If operador = " "c OrElse String.IsNullOrEmpty(num2Str) Then Return Nothing
+        If operador = " "c Then Return Nothing
+
+        ' Extraer segundo número (debe estar en la misma columna vertical que el primero)
+        Dim num2Info = ExtraerNumeroVerticalConPosicion(filaInicio + 1, num1Info.ColumnaFin)
+        If num2Info Is Nothing Then Return Nothing
 
         ' Verificar que hay línea de guiones (línea filaInicio + 2)
-        If Not EsLineaGuiones(filaInicio + 2, columna) Then Return Nothing
-
-        ' Parsear números
-        Dim num1, num2 As Integer
-        If Not Integer.TryParse(num1Str, num1) OrElse Not Integer.TryParse(num2Str, num2) Then
-            Return Nothing
-        End If
-
-        ' Encontrar la posición de inicio de los números (columna más a la derecha)
-        Dim colInicio As Integer = ObtenerColumnaInicioNumeroVertical(filaInicio, columna)
+        Dim hayGuiones As Boolean = False
+        For i = Math.Max(0, num1Info.ColumnaInicio - 1) To Math.Min(COLUMNAS - 1, num1Info.ColumnaFin + 1)
+            If pizarra(filaInicio + 2, i) = "-"c Then
+                hayGuiones = True
+                Exit For
+            End If
+        Next
+        If Not hayGuiones Then Return Nothing
 
         ' Calcular longitud del resultado esperado
-        Dim longitudRes As Integer = Math.Max(num1Str.Length, num2Str.Length)
+        Dim resultado As Integer = 0
+        Select Case operador
+            Case "+"c
+                resultado = num1Info.Valor + num2Info.Valor
+            Case "-"c
+                resultado = num1Info.Valor - num2Info.Valor
+            Case "*"c
+                resultado = num1Info.Valor * num2Info.Valor
+            Case "/"c
+                If num2Info.Valor <> 0 Then resultado = num1Info.Valor \ num2Info.Valor
+        End Select
+
+        Dim longitudRes As Integer = Math.Max(resultado.ToString().Length, Math.Max(num1Info.Longitud, num2Info.Longitud))
 
         Return New InfoOperacionVertical With {
             .FilaInicio = filaInicio,
-            .ColumnaInicio = colInicio,
-            .Numero1 = num1,
-            .Numero2 = num2,
+            .ColumnaInicio = num1Info.ColumnaFin,
+            .Numero1 = num1Info.Valor,
+            .Numero2 = num2Info.Valor,
             .Operador = operador,
             .LongitudResultado = longitudRes
         }
+    End Function
+
+    ' Clase auxiliar para almacenar información de un número vertical
+    Private Class NumeroVerticalInfo
+        Public Property Valor As Integer
+        Public Property ColumnaInicio As Integer
+        Public Property ColumnaFin As Integer
+        Public Property Longitud As Integer
+    End Class
+
+    ' Función para extraer un número vertical con su posición
+    Private Function ExtraerNumeroVerticalConPosicion(fila As Integer, columnaRef As Integer) As NumeroVerticalInfo
+        Dim lineaTexto As String = ""
+        For x = 0 To COLUMNAS - 1
+            lineaTexto &= pizarra(fila, x)
+        Next
+
+        ' Buscar el número más cercano a columnaRef
+        Dim mejorNumero As NumeroVerticalInfo = Nothing
+        Dim menorDistancia As Integer = Integer.MaxValue
+
+        For i = 0 To lineaTexto.Length - 1
+            If Char.IsDigit(lineaTexto(i)) Then
+                ' Encontrar el número completo
+                Dim inicio As Integer = i
+                While inicio > 0 AndAlso Char.IsDigit(lineaTexto(inicio - 1))
+                    inicio -= 1
+                End While
+
+                Dim fin As Integer = i
+                While fin < lineaTexto.Length - 1 AndAlso Char.IsDigit(lineaTexto(fin + 1))
+                    fin += 1
+                End While
+
+                Dim numeroStr As String = lineaTexto.Substring(inicio, fin - inicio + 1)
+                Dim valor As Integer
+                If Integer.TryParse(numeroStr, valor) Then
+                    Dim distancia As Integer = Math.Abs(fin - columnaRef)
+                    If distancia < menorDistancia Then
+                        menorDistancia = distancia
+                        mejorNumero = New NumeroVerticalInfo With {
+                            .Valor = valor,
+                            .ColumnaInicio = inicio,
+                            .ColumnaFin = fin,
+                            .Longitud = fin - inicio + 1
+                        }
+                    End If
+                End If
+
+                ' Saltar al final del número procesado
+                i = fin
+            End If
+        Next
+
+        Return mejorNumero
     End Function
 
     ' Función para extraer un número en formato vertical (alineado a la derecha)
